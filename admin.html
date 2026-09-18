@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dispatch Link | Admin Dashboard</title>
+    <link rel="icon" type="image/png" href="https://cdn.jsdelivr.net/gh/mrartist048/fmcsa-control@main/favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f1f5f9; color: #0f172a; margin: 0; padding: 0; min-height: 100vh; overflow-y: auto; }
+        
+        #authOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(8px); z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .auth-card {
+            background: #ffffff; padding: 36px 32px; border-radius: 16px; width: 100%; max-width: 400px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center; border: 1px solid #e2e8f0;
+        }
+        .auth-icon {
+            font-size: 38px; margin-bottom: 16px; background: #f0fdf4; width: 70px; height: 70px;
+            line-height: 70px; border-radius: 50%; display: inline-block; border: 1px solid #dcfce7;
+        }
+        .auth-card h2 { margin: 0 0 8px 0; font-size: 20px; font-weight: 700; color: #0f172a; }
+        .auth-card p { margin: 0 0 24px 0; font-size: 13.5px; color: #64748b; line-height: 1.5; }
+        .auth-input {
+            width: 100%; padding: 12px 16px; font-size: 14px; border: 1px solid #cbd5e1;
+            border-radius: 10px; outline: none; transition: all 0.2s ease; font-weight: 500;
+            box-sizing: border-box; margin-bottom: 12px;
+        }
+        .auth-input:focus { border-color: #0284c7; box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.15); }
+        
+        .password-container { position: relative; width: 100%; margin-bottom: 12px; }
+        .password-container .auth-input { margin-bottom: 0; padding-right: 45px; }
+        .eye-btn {
+            position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+            background: none; border: none; cursor: pointer; font-size: 18px; color: #64748b; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .eye-btn:hover { color: #0f172a; }
+
+        .auth-btn {
+            width: 100%; background: #0f172a; color: white; border: none; padding: 12px;
+            font-size: 14px; font-weight: 600; border-radius: 10px; cursor: pointer; transition: background 0.2s ease;
+        }
+        .auth-btn:hover { background: #1e293b; }
+        .auth-error { color: #dc2626; font-size: 12px; margin-top: 10px; font-weight: 600; display: none; }
+
+        .admin-layout { display: flex; min-height: 100vh; width: 100vw; position: relative; }
+        
+        .sidebar { width: 280px; background: #0f172a; color: white; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.08); z-index: 100; transition: transform 0.3s ease; position: fixed; height: 100vh; top: 0; left: 0; }
+        .sidebar-brand { padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: space-between; }
+        .sidebar-brand h2 { margin: 0; font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: -0.3px; }
+        .sidebar-brand span { font-size: 11px; color: #38bdf8; font-weight: 600; display: block; margin-top: 2px; }
+        
+        .sidebar-menu { padding: 20px 12px; display: flex; flex-direction: column; gap: 8px; flex: 1; overflow-y: auto; }
+        .menu-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: #64748b; padding: 0 12px 6px 12px; font-weight: 700; }
+        
+        .nav-btn { background: transparent; color: #94a3b8; border: none; padding: 12px 16px; text-align: left; font-size: 13.5px; font-weight: 600; border-radius: 10px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s ease; width: 100%; }
+        .nav-btn:hover { background: rgba(255,255,255,0.05); color: #f8fafc; }
+        .nav-btn.active { background: #0284c7; color: white; box-shadow: 0 4px 12px rgba(2,132,199,0.35); }
+
+        .sidebar-license-widget {
+            margin: 12px 16px; background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 10px; padding: 12px 14px;
+        }
+        .sidebar-license-title {
+            font-size: 10px; text-transform: uppercase; letter-spacing: 0.8px; color: #38bdf8; font-weight: 700; margin-bottom: 6px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .sidebar-license-row { display: flex; justify-content: space-between; font-size: 12px; color: #cbd5e1; margin-bottom: 4px; }
+        .sidebar-license-row:last-child { margin-bottom: 0; }
+
+        .main-wrapper { flex: 1; display: flex; flex-direction: column; background: #f8fafc; margin-left: 280px; min-height: 100vh; width: calc(100vw - 280px); }
+        
+        .top-header { height: auto; min-height: 70px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 12px 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); flex-shrink: 0; gap: 12px; flex-wrap: wrap; }
+        .header-title-wrapper { display: flex; align-items: center; gap: 12px; }
+        .header-title { font-size: 18px; font-weight: 700; color: #0f172a; word-break: break-word; }
+        
+        .menu-toggle { display: none; background: transparent; border: none; font-size: 22px; cursor: pointer; color: #0f172a; padding: 4px; flex-shrink: 0; }
+        .header-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+        .filter-bar { background: white; padding: 14px 24px; border-bottom: 1px solid #e2e8f0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.01); flex-shrink: 0; }
+        .filter-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        
+        .filter-btn { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 6px 14px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; transition: all 0.2s ease; white-space: nowrap; }
+        .filter-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .filter-btn.active { background: #0284c7 !important; color: white !important; border-color: #0284c7 !important; box-shadow: 0 2px 6px rgba(2, 132, 199, 0.3); }
+
+        .single-range-input { padding: 6px 12px; font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px; outline: none; font-weight: 600; color: #0f172a; background: #fff; cursor: pointer; width: 210px; text-align: center; }
+        
+        .admin-body { flex: 1; padding: 24px; background: #f8fafc; min-height: calc(100vh - 70px); }
+        
+        .card { background: white; border: 1px solid #e2e8f0; padding: 20px 24px; border-radius: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.03); transition: transform 0.15s ease; }
+        .card:hover { transform: translateY(-1px); }
+        
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; }
+        .badge-online { background: #dcfce7; color: #15803d; }
+        .badge-warning { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+        .online-dot { width: 8px; height: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; }
+        
+        .btn-success { background: #16a34a; color: white; border: none; padding: 8px 16px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
+        .btn-success:hover { background: #15803d; }
+
+        .btn-info { background: #0284c7; color: white; border: none; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
+        .btn-info:hover { background: #0369a1; }
+
+        .btn-refresh-top { background: #0f172a; color: white; border: none; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
+        .btn-refresh-top:hover { background: #1e293b; }
+
+        .stat-chip { background: #f8fafc; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; border: 1px solid #f1f5f9; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 24px 32px; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .sidebar-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 90; }
+
+        @media (max-width: 900px) {
+            .sidebar { left: -280px; }
+            .sidebar.open { left: 0; }
+            .sidebar-overlay.active { display: block; }
+            .menu-toggle { display: block; }
+            .main-wrapper { margin-left: 0; width: 100vw; }
+            .top-header { padding: 12px 16px; flex-direction: column; align-items: stretch; }
+            .header-title-wrapper { width: 100%; justify-content: flex-start; }
+            .header-actions { width: 100%; justify-content: space-between; }
+            .header-actions button { flex: 1; justify-content: center; font-size: 11.5px; padding: 8px 8px; }
+            .filter-bar { padding: 12px 16px; flex-direction: column; align-items: stretch; gap: 10px; }
+            .filter-group { width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 6px; }
+            .filter-group span { width: 100%; margin-bottom: 2px; }
+            .admin-body { padding: 16px; }
+            .card { flex-direction: column; align-items: flex-start !important; gap: 10px; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="authOverlay">
+        <div class="auth-card">
+            <div class="auth-icon">🏢</div>
+            <h2>Company Admin Portal</h2>
+            <p>Enter your Company Name and Master Admin Password to view your designated agents.</p>
+            <input type="text" id="adminCompanyInput" class="auth-input" placeholder="Company Name (e.g. dispatchloadify)">
+            
+            <div class="password-container">
+                <input type="password" id="adminPasswordInput" class="auth-input" placeholder="Enter master password..." onkeypress="handlePasswordKeypress(event)">
+                <button type="button" class="eye-btn" id="togglePasswordBtn" onclick="togglePasswordVisibility()">👁️</button>
+            </div>
+
+            <button onclick="verifyAdminPassword()" class="auth-btn">Access Dashboard</button>
+            <div id="authErrorMsg" class="auth-error">Invalid Company Name or Password!</div>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+    <div class="modal-overlay" id="summaryModal">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#0f172a; font-size:18px;">Shift Automated Summary Report</h3>
+            <div id="modalSummaryBody" style="font-size:13px; color:#334155; line-height:1.6; margin-bottom:20px;">
+                Loading summary...
+            </div>
+            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                <button onclick="copySummaryText()" class="btn-info">Copy Summary</button>
+                <button onclick="closeSummaryModal()" class="filter-btn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="admin-layout">
+        <div class="sidebar" id="appSidebar">
+            <div class="sidebar-brand">
+                <div>
+                    <h2 id="brandTitle">Dispatch Link</h2>
+                    <span id="brandSubtitle">USA Shift Control Panel</span>
+                </div>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-label">Navigation Menu</div>
+                <button onclick="switchTab('online')" id="tabOnline" class="nav-btn active">
+                    Online Users
+                </button>
+                <button onclick="switchTab('leaderboard')" id="tabLeaderboard" class="nav-btn">
+                    Top Calling Leaderboard
+                </button>
+                <button onclick="switchTab('reports')" id="tabReports" class="nav-btn">
+                    Shift Reports & Ratios
+                </button>
+            </div>
+
+            <div class="sidebar-license-widget">
+                <div class="sidebar-license-title">
+                    <span>License Status</span>
+                    <span>🔒</span>
+                </div>
+                <div class="sidebar-license-row">
+                    <span>Max Allowed Tabs:</span>
+                    <b id="sidebarMaxLimit">-</b>
+                </div>
+                <div class="sidebar-license-row">
+                    <span>Active Sessions:</span>
+                    <b id="sidebarActiveSessions" style="color: #38bdf8;">-</b>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-wrapper">
+            <div class="top-header">
+                <div class="header-title-wrapper">
+                    <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+                    <div class="header-title" id="pageTitle">Online Users</div>
+                </div>
+                <div class="header-actions">
+                    <button onclick="openSummaryModal()" class="btn-info" id="summaryBtn" style="display: flex;">
+                        Shift Summary
+                    </button>
+                    <button onclick="fetchAdminData()" class="btn-refresh-top">
+                        <span>🔄</span> Refresh
+                    </button>
+                    <button onclick="exportCSV()" id="exportBtn" class="btn-success" style="display: none;">
+                        Export CSV
+                    </button>
+                </div>
+            </div>
+
+            <div id="filterBar" class="filter-bar" style="display: none;">
+                <div class="filter-group">
+                    <span style="font-size: 12px; font-weight: 700; color: #0f172a;">USA Date Filter:</span>
+                    <button onclick="setDateFilterPreset('today')" id="presetToday" class="filter-btn active">Today (USA)</button>
+                    <button onclick="setDateFilterPreset('week')" id="presetWeek" class="filter-btn">Last 7 Days</button>
+                </div>
+                <div class="filter-group" style="font-size: 12px; color: #64748b; font-weight: 600;">
+                    <span>Custom Range / Single Date:</span>
+                    <input type="text" id="unifiedDateRangePicker" class="single-range-input" placeholder="Select date or range...">
+                </div>
+            </div>
+
+            <div class="admin-body" id="adminBodyContent">
+                Loading admin statistics...
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        const FIREBASE_DB_URL_1 = "https://data-scrapper-eddcf-default-rtdb.firebaseio.com/";
+        const FIREBASE_DB_URL_2 = "https://data-scraper-2-default-rtdb.firebaseio.com/";
+        const FIREBASE_DB_URL_3 = "https://data-scraper-3-default-rtdb.firebaseio.com/";
+
+        let allowedUsers = {};
+        const MASTER_ADMIN_PASS = "admin7654";
+
+        let currentClient = "";
+        let activeTab = 'online';
+        let globalSessions = {}, globalReports = {}, globalCallLogs = {};
+        let calendarPicker = null;
+
+        async function fetchAllowedUsersFromFirebase() {
+            try {
+                let urls = [
+                    `${FIREBASE_DB_URL_1}allowedUsers.json`,
+                    `${FIREBASE_DB_URL_2}allowedUsers.json`,
+                    `${FIREBASE_DB_URL_3}allowedUsers.json`
+                ];
+                let responses = await Promise.all(urls.map(url => fetch(url).then(res => res.json()).catch(() => null)));
+                allowedUsers = {};
+                responses.forEach(firebaseUsers => {
+                    if (firebaseUsers) {
+                        allowedUsers = Object.assign({}, allowedUsers, firebaseUsers);
+                    }
+                });
+            } catch (e) {
+                console.error("Could not fetch remote users from Firebase:", e);
+            }
+        }
+
+        window.onload = async function() {
+            await fetchAllowedUsersFromFirebase();
+            let authOverlay = document.getElementById('authOverlay');
+            if (authOverlay) {
+                authOverlay.style.display = 'flex';
+            }
+            
+            calendarPicker = flatpickr("#unifiedDateRangePicker", {
+                mode: "range",
+                dateFormat: "Y-m-d",
+                defaultDate: [getUSACurrentDate(), getUSACurrentDate()],
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length >= 1) {
+                        startDateStr = instance.formatDate(selectedDates[0], "Y-m-d");
+                        endDateStr = selectedDates.length === 2 ? instance.formatDate(selectedDates[1], "Y-m-d") : startDateStr;
+                        
+                        ['presetToday', 'presetWeek'].forEach(id => {
+                            let b = document.getElementById(id);
+                            if (b) b.classList.remove('active');
+                        });
+                        
+                        renderContent();
+                    }
+                }
+            });
+        };
+
+        function togglePasswordVisibility() {
+            let passInput = document.getElementById('adminPasswordInput');
+            let toggleBtn = document.getElementById('togglePasswordBtn');
+            if (passInput.type === 'password') {
+                passInput.type = 'text';
+                toggleBtn.innerText = '🙈';
+            } else {
+                passInput.type = 'password';
+                toggleBtn.innerText = '👁️';
+            }
+        }
+
+        async function verifyAdminPassword() {
+            let companyInput = document.getElementById('adminCompanyInput').value.trim();
+            let passInput = document.getElementById('adminPasswordInput').value;
+            let errorMsg = document.getElementById('authErrorMsg');
+
+            await fetchAllowedUsersFromFirebase();
+            let userConfig = allowedUsers[companyInput];
+            
+            let isValid = userConfig && (passInput === MASTER_ADMIN_PASS);
+
+            if (isValid) {
+                currentClient = companyInput;
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('brandTitle').innerText = currentClient.toUpperCase();
+                document.getElementById('sidebarMaxLimit').innerText = userConfig.maxLaptops || "Unlimited";
+
+                setDateFilterPreset('today');
+                fetchAdminData();
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('adminPasswordInput').style.borderColor = '#dc2626';
+            }
+        }
+
+        function handlePasswordKeypress(e) {
+            if (e.key === 'Enter') {
+                verifyAdminPassword();
+            }
+        }
+
+        function toggleSidebar() {
+            let sidebar = document.getElementById('appSidebar');
+            let overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('open');
+            overlay.classList.toggle('active');
+        }
+
+        function getUSACurrentDate() {
+            try {
+                let options = { timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit' };
+                let formatter = new Intl.DateTimeFormat('en-CA', options);
+                return formatter.format(new Date());
+            } catch (e) {
+                let now = new Date();
+                return now.toISOString().split('T')[0];
+            }
+        }
+
+        let todayStr = getUSACurrentDate();
+        let startDateStr = todayStr;
+        let endDateStr = todayStr;
+
+        let dbRefsInitialized = false;
+        let activeDatabases = [];
+
+        async function fetchAdminData() {
+            if (!currentClient) return;
+
+            if (dbRefsInitialized) {
+                renderContent();
+                updateLicenseStatsWidget();
+                return;
+            }
+
+            try {
+                const clientDbUrl = (allowedUsers[currentClient] && allowedUsers[currentClient].dbUrl) 
+                    ? allowedUsers[currentClient].dbUrl 
+                    : FIREBASE_DB_URL_1;
+                
+                const urls = [clientDbUrl, FIREBASE_DB_URL_1, FIREBASE_DB_URL_2, FIREBASE_DB_URL_3];
+                let uniqueUrls = [...new Set(urls)];
+
+                uniqueUrls.forEach((url, index) => {
+                    let appName = `adminApp_${index}`;
+                    let secondaryApp;
+                    try {
+                        secondaryApp = firebase.initializeApp({ databaseURL: url }, appName);
+                    } catch (err) {
+                        secondaryApp = firebase.app(appName);
+                    }
+                    let db = secondaryApp.database();
+                    activeDatabases.push(db);
+
+                    db.ref(`sessions/${currentClient}`).on('value', (snapshot) => {
+                        let val = snapshot.val() || {};
+                        if (index === 0) globalSessions = {};
+                        globalSessions = { ...globalSessions, ...val };
+                        renderContent();
+                        updateLicenseStatsWidget();
+                    });
+
+                    db.ref(`shift_reports/${currentClient}`).on('value', (snapshot) => {
+                        let val = snapshot.val() || {};
+                        if (index === 0) globalReports = {};
+                        globalReports = { ...globalReports, ...val };
+                        renderContent();
+                    });
+
+                    db.ref(`call_logs/${currentClient}`).on('value', (snapshot) => {
+                        let val = snapshot.val() || {};
+                        if (index === 0) globalCallLogs = {};
+                        globalCallLogs = { ...globalCallLogs, ...val };
+                        renderContent();
+                    });
+                });
+
+                dbRefsInitialized = true;
+                updateLicenseStatsWidget();
+            } catch (e) {
+                console.error("Real-time listener error:", e);
+            }
+        }
+
+        function updateLicenseStatsWidget() {
+            if (!currentClient || !allowedUsers[currentClient]) return;
+            let maxLimit = allowedUsers[currentClient].maxLaptops || 0;
+            let now = Date.now();
+            let activeCount = 0;
+            const offlineThreshold = 180000; // Updated to 3 minutes (180 seconds)
+
+            if (globalSessions) {
+                Object.keys(globalSessions).forEach(k => {
+                    let session = globalSessions[k];
+                    if (session && session.timestamp && (now - session.timestamp < offlineThreshold)) {
+                        activeCount++;
+                    }
+                });
+            }
+
+            let activeElem = document.getElementById('sidebarActiveSessions');
+            if (activeElem) {
+                activeElem.innerText = `${activeCount} / ${maxLimit} active`;
+                if (activeCount > maxLimit) {
+                    activeElem.style.color = "#f87171";
+                } else {
+                    activeElem.style.color = "#38bdf8";
+                }
+            }
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.querySelectorAll('.sidebar-menu button').forEach(b => b.classList.remove('active'));
+            let activeBtnElem = document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            if (activeBtnElem) activeBtnElem.classList.add('active');
+            
+            if(window.innerWidth <= 900) toggleSidebar();
+
+            let filterBar = document.getElementById('filterBar');
+            let exportBtn = document.getElementById('exportBtn');
+            let summaryBtn = document.getElementById('summaryBtn');
+            let pageTitle = document.getElementById('pageTitle');
+
+            filterBar.style.display = 'none';
+            exportBtn.style.display = 'none';
+            summaryBtn.style.display = 'flex';
+
+            if (tab === 'online') {
+                pageTitle.innerText = "Online Users";
+                renderContent();
+            } else if (tab === 'leaderboard') {
+                pageTitle.innerText = "Top Calling Leaderboard";
+                filterBar.style.display = 'flex';
+                renderContent();
+            } else if (tab === 'reports') {
+                pageTitle.innerText = "Shift Reports & Ratios (USA Time)";
+                filterBar.style.display = 'flex';
+                exportBtn.style.display = 'block';
+                exportBtn.innerText = "Export CSV";
+                exportBtn.onclick = exportCSV;
+                renderContent();
+            }
+        }
+
+        function setDateFilterPreset(preset) {
+            let currentUSAToday = getUSACurrentDate();
+
+            ['presetToday', 'presetWeek'].forEach(id => {
+                let b = document.getElementById(id);
+                if (b) b.classList.remove('active');
+            });
+
+            let activeBtn = document.getElementById('preset' + preset.charAt(0).toUpperCase() + preset.slice(1));
+            if (activeBtn) activeBtn.classList.add('active');
+
+            if (preset === 'today') {
+                startDateStr = currentUSAToday; endDateStr = currentUSAToday;
+            } else if (preset === 'week') {
+                let past = new Date(currentUSAToday); past.setDate(past.getDate() - 6);
+                startDateStr = past.toISOString().split('T')[0]; endDateStr = currentUSAToday;
+            }
+
+            if (calendarPicker) {
+                calendarPicker.setDate([startDateStr, endDateStr], true);
+            }
+
+            renderContent();
+        }
+
+        function isDateInRange(dateVal) {
+            if (!dateVal) return false;
+            let dStr = String(dateVal).substring(0, 10);
+            return dStr >= startDateStr && dStr <= endDateStr;
+        }
+
+        function openSummaryModal() {
+            let modal = document.getElementById('summaryModal');
+            let body = document.getElementById('modalSummaryBody');
+            
+            let totalCallsAll = 0, totalSalesAll = 0;
+            let agentSummary = {};
+
+            let allAgents = new Set([...Object.keys(globalCallLogs), ...Object.keys(globalReports)]);
+            allAgents.forEach(name => {
+                let logs = globalCallLogs[name] || [];
+                if (logs && typeof logs === 'object' && !Array.isArray(logs)) logs = Object.values(logs);
+                let filteredLogs = Array.isArray(logs) ? logs.filter(l => isDateInRange(l.shiftDate || l.date)) : [];
+                let sales = filteredLogs.filter(l => l.status === 'Sale Closed').length;
+                
+                agentSummary[name] = { calls: filteredLogs.length, sales: sales };
+                totalCallsAll += filteredLogs.length;
+                totalSalesAll += sales;
+            });
+
+            let sortedAgents = Object.keys(agentSummary).sort((a,b) => agentSummary[b].calls - agentSummary[a].calls);
+            let topAgent = sortedAgents.length > 0 ? sortedAgents[0] : 'None';
+
+            body.innerHTML = `
+                <b>Company:</b> ${currentClient.toUpperCase()}<br>
+                <b>USA Shift Range:</b> ${startDateStr} to ${endDateStr}<br>
+                <b>Total Calls:</b> ${totalCallsAll}<br>
+                <b>Total Sales:</b> ${totalSalesAll}<br>
+                <b>Top Performer:</b> ${topAgent} (${agentSummary[topAgent]?.calls || 0} calls)<br>
+            `;
+            modal.style.display = 'flex';
+        }
+
+        function closeSummaryModal() { document.getElementById('summaryModal').style.display = 'none'; }
+        function copySummaryText() {
+            navigator.clipboard.writeText(document.getElementById('modalSummaryBody').innerText);
+            alert("Summary copied to clipboard!");
+        }
+
+        function renderContent() {
+            let container = document.getElementById('adminBodyContent');
+            if(!container) return;
+            let now = Date.now();
+            const offlineThreshold = 180000; // Updated to 3 minutes (180 seconds)
+
+            if (activeTab === 'online') {
+                let html = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">`;
+                
+                // Track active sessions per agent name to detect double tabs
+                let activeNameCounts = {};
+                if (globalSessions) {
+                    Object.keys(globalSessions).forEach(key => {
+                        let sObj = globalSessions[key];
+                        let name = sObj?.nickname || sObj?.name || key;
+                        let lastActiveTime = sObj?.timestamp || sObj?.lastActive || 0;
+                        let isOnline = (lastActiveTime && (now - lastActiveTime < offlineThreshold)) || lastActiveTime === 0;
+                        if (isOnline) {
+                            activeNameCounts[name] = (activeNameCounts[name] || 0) + 1;
+                        }
+                    });
+                }
+
+                let uniqueUsers = {};
+                if (globalSessions) {
+                    Object.keys(globalSessions).forEach(key => {
+                        let sObj = globalSessions[key];
+                        let name = sObj?.nickname || sObj?.name || key;
+                        // Keep the most recent session object if multiple exist for the same name
+                        if (!uniqueUsers[name] || (sObj?.timestamp > (uniqueUsers[name].timestamp || 0))) {
+                            uniqueUsers[name] = { ...sObj, resolvedName: name, lastActive: sObj?.timestamp || sObj?.lastActive || 0 };
+                        }
+                    });
+                }
+
+                let userKeys = Object.keys(uniqueUsers);
+                if (userKeys.length === 0) {
+                    container.innerHTML = `<p style="color: #64748b; text-align: center; padding: 40px; font-style: italic;">No users detected for company: <b>${currentClient}</b></p>`;
+                    return;
+                }
+
+                let renderedCount = 0;
+                userKeys.forEach(nameKey => {
+                    let uData = uniqueUsers[nameKey];
+                    let displayName = uData.resolvedName || nameKey;
+                    let lastActiveTime = uData.lastActive || 0;
+                    
+                    let isOnline = lastActiveTime && (now - lastActiveTime < offlineThreshold);
+                    if (!isOnline && lastActiveTime === 0) isOnline = true;
+                    if (!isOnline) return;
+
+                    renderedCount++;
+                    
+                    let login12Hr = 'N/A';
+                    if (uData.loginTime) {
+                        let parsedDate = new Date(uData.loginTime);
+                        if (!isNaN(parsedDate)) {
+                            login12Hr = parsedDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                        } else {
+                            login12Hr = uData.loginTime;
+                        }
+                    }
+
+                    // Check if this user has opened double tabs/sessions
+                    let sessionCount = activeNameCounts[displayName] || 1;
+                    let doubleTabBadge = sessionCount > 1 
+                        ? `<span class="badge badge-warning">⚠️ Double Tab (${sessionCount} Active)</span>` 
+                        : `<span class="badge badge-online"><span class="online-dot"></span>Online</span>`;
+                    
+                    let borderColor = sessionCount > 1 ? '#dc2626' : '#22c55e';
+                    
+                    html += `
+                        <div class="card" style="margin-bottom:0; align-items: flex-start; flex-direction: column; gap: 12px; border-left: 4px solid ${borderColor}; width: 100%;">
+                            <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; gap: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px; word-break: break-all;">
+                                    <b style="font-size: 15px; color: #0f172a;">${displayName}</b>
+                                </div>
+                                ${doubleTabBadge}
+                            </div>
+                            <div style="font-size: 13px; color: #334155; width: 100%;">
+                                Login: <b style="color: #0f172a;">${login12Hr}</b>
+                            </div>
+                        </div>`;
+                });
+
+                if (renderedCount === 0) {
+                    container.innerHTML = `<p style="color: #64748b; text-align: center; padding: 40px; font-style: italic;">No online users currently active.</p>`;
+                    return;
+                }
+                container.innerHTML = html + `</div>`;
+
+            } else if (activeTab === 'leaderboard') {
+                let html = `<div style="font-size: 12px; color: #64748b; margin-bottom: 16px; font-weight: 600;">Top Calling Leaderboard (USA Time Range: <b>${startDateStr}</b> to <b>${endDateStr}</b>)</div><div style="display: flex; flex-direction: column; gap: 12px;">`;
+                
+                let agentCallingStats = {};
+                let agentLastCallTime = {};
+                let allAgents = new Set([...Object.keys(globalCallLogs), ...Object.keys(globalReports)]);
+
+                allAgents.forEach(name => {
+                    let logs = globalCallLogs[name] || [];
+                    if (logs && typeof logs === 'object' && !Array.isArray(logs)) logs = Object.values(logs);
+                    
+                    let reps = globalReports[name] || [];
+                    if (reps && typeof reps === 'object' && !Array.isArray(reps)) reps = Object.values(reps);
+
+                    let allAgentLogs = [...logs];
+                    reps.forEach(r => {
+                        if (r.logs) {
+                            let rLogs = Array.isArray(r.logs) ? r.logs : Object.values(r.logs);
+                            allAgentLogs = allAgentLogs.concat(rLogs);
+                        } else if (r.date && r.status) {
+                            allAgentLogs.push(r);
+                        }
+                    });
+
+                    let filteredLogs = allAgentLogs.filter(l => isDateInRange(l.shiftDate || l.date));
+                    agentCallingStats[name] = filteredLogs.length;
+
+                    let latestTime = 'N/A';
+                    if (filteredLogs.length > 0) {
+                        filteredLogs.sort((a, b) => {
+                            let timeA = new Date(a.timestamp || a.date || 0).getTime();
+                            let timeB = new Date(b.timestamp || b.date || 0).getTime();
+                            if (isNaN(timeA)) timeA = 0;
+                            if (isNaN(timeB)) timeB = 0;
+                            return timeB - timeA;
+                        });
+
+                        let rawDate = filteredLogs[0].timestamp || filteredLogs[0].date;
+                        if (rawDate) {
+                            let dObj = new Date(rawDate);
+                            if (!isNaN(dObj.getTime())) {
+                                latestTime = dObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                            } else {
+                                latestTime = String(rawDate).split('T')[1] ? String(rawDate).split('T')[1].substring(0, 5) : 'Just Now';
+                            }
+                        } else {
+                            latestTime = 'Just Now';
+                        }
+                    }
+                    agentLastCallTime[name] = latestTime;
+                });
+
+                let sortedLeaderboard = Object.keys(agentCallingStats)
+                    .filter(name => agentCallingStats[name] > 0)
+                    .sort((a, b) => agentCallingStats[b] - agentCallingStats[a]);
+
+                if (sortedLeaderboard.length === 0) {
+                    container.innerHTML = `<p style="color: #64748b; text-align: center; padding: 40px; font-style: italic;">No calling data found for the selected date range.</p>`;
+                    return;
+                }
+
+                let rank = 1;
+                sortedLeaderboard.forEach(name => {
+                    let calls = agentCallingStats[name];
+                    let lastCall = agentLastCallTime[name];
+                    let rankBadgeBg = rank === 1 ? '#f59e0b' : (rank === 2 ? '#94a3b8' : (rank === 3 ? '#b45309' : '#e2e8f0'));
+                    let rankText = rank === 1 ? '1' : (rank === 2 ? '2' : (rank === 3 ? '3' : `${rank}`));
+
+                    html += `
+                        <div class="card" style="border-left: 6px solid ${rank === 1 ? '#f59e0b' : '#0284c7'}; align-items: center; width: 100%;">
+                            <div style="display: flex; align-items: center; gap: 14px;">
+                                <div style="font-size: 16px; font-weight: 800; background: ${rankBadgeBg}; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">${rankText}</div>
+                                <div>
+                                    <b style="font-size: 16px; color: #0f172a;">${name}</b>
+                                    <div style="font-size: 12px; color: #64748b; margin-top: 2px;">Company Agent</div>
+                                    <div style="font-size: 11px; color: #0284c7; font-weight: 600; margin-top: 3px;">Last Call: ${lastCall}</div>
+                                </div>
+                            </div>
+                            <div style="text-align: right;">
+                                <div style="font-size: 20px; font-weight: 800; color: #0284c7;">${calls} <span style="font-size: 12px; color: #64748b; font-weight: 600;">Calls</span></div>
+                            </div>
+                        </div>`;
+                    rank++;
+                });
+
+                container.innerHTML = html + `</div>`;
+
+            } else if (activeTab === 'reports') {
+                let html = `<div style="font-size: 12px; color: #64748b; margin-bottom: 16px; font-weight: 600;">Shift Reports (USA Time Zone) for <b>${currentClient.toUpperCase()}</b></div><div style="display: flex; flex-direction: column; gap: 12px;">`;
+                let hasReports = false;
+                let allAgents = new Set([...Object.keys(globalCallLogs), ...Object.keys(globalReports)]);
+
+                allAgents.forEach(name => {
+                    let logs = globalCallLogs[name] || [];
+                    if (logs && typeof logs === 'object' && !Array.isArray(logs)) logs = Object.values(logs);
+                    
+                    let reps = globalReports[name] || [];
+                    if (reps && typeof reps === 'object' && !Array.isArray(reps)) reps = Object.values(reps);
+
+                    let allAgentLogs = [...logs];
+                    reps.forEach(r => {
+                        if (r.logs) {
+                            let rLogs = Array.isArray(r.logs) ? r.logs : Object.values(r.logs);
+                            allAgentLogs = allAgentLogs.concat(rLogs);
+                        } else if (r.date && r.status) {
+                            allAgentLogs.push(r);
+                        }
+                    });
+
+                    let filteredLogs = allAgentLogs.filter(l => isDateInRange(l.shiftDate || l.date));
+
+                    let datesMap = {};
+                    filteredLogs.forEach(l => {
+                        let d = (l.shiftDate || l.date || startDateStr).substring(0, 10);
+                        if (!datesMap[d]) datesMap[d] = [];
+                        datesMap[d].push(l);
+                    });
+
+                    Object.keys(datesMap).forEach(dateStr => {
+                        hasReports = true;
+                        let finalLogs = datesMap[dateStr];
+                        let counts = { "Hung up": 0, "Voicemail": 0, "Not interested": 0, "Do not Call": 0, "Follow up": 0, "Sale Closed": 0 };
+                        
+                        let sortedDateLogs = [...finalLogs].sort((a, b) => {
+                            let timeA = new Date(a.timestamp || a.date || 0).getTime();
+                            let timeB = new Date(b.timestamp || b.date || 0).getTime();
+                            if (isNaN(timeA)) timeA = 0;
+                            if (isNaN(timeB)) timeB = 0;
+                            return timeB - timeA;
+                        });
+
+                        let lastCallTime = 'N/A';
+                        if (sortedDateLogs.length > 0) {
+                            let rawDate = sortedDateLogs[0].timestamp || sortedDateLogs[0].date;
+                            if (rawDate) {
+                                let dObj = new Date(rawDate);
+                                if (!isNaN(dObj.getTime())) {
+                                    lastCallTime = dObj.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+                                } else {
+                                    lastCallTime = String(rawDate).split('T')[1] ? String(rawDate).split('T')[1].substring(0, 5) : 'Just Now';
+                                }
+                            } else {
+                                lastCallTime = 'Just Now';
+                            }
+                        }
+
+                        finalLogs.forEach(l => {
+                            let st = l.status || "Hung up";
+                            if (counts[st] !== undefined) counts[st]++;
+                            else counts["Hung up"]++;
+                        });
+
+                        let totalC = finalLogs.length;
+                        let connected = totalC - counts["Voicemail"];
+                        let ratio = totalC > 0 ? Math.round((connected / totalC) * 100) : 0;
+
+                        html += `
+                            <div class="card" style="flex-direction: column; align-items: flex-start; gap: 12px; border-left: 4px solid #16a34a; width: 100%;">
+                                <div style="display: flex; justify-content: space-between; width: 100%; flex-wrap: wrap; align-items: center;">
+                                    <b style="color: #0f172a; font-size: 15px;">Agent: ${name}</b>
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <span style="font-size: 11px; color: #0284c7; font-weight: 700; background: #e0f2fe; padding: 4px 8px; border-radius: 6px;">Last Call: ${lastCallTime}</span>
+                                        <span style="font-size: 12px; color: #64748b; font-weight: 700; background: #f1f5f9; padding: 4px 8px; border-radius: 6px;">USA Date: ${dateStr}</span>
+                                    </div>
+                                </div>
+                                <div style="font-size: 13px; color: #334155;"><b>Total Calls:</b> ${totalC}</div>
+                                <div style="display: flex; gap: 6px; font-size: 11px; flex-wrap: wrap; width: 100%;">
+                                    <span class="stat-chip" style="background: #fef2f2; color: #991b1b;">Hung up: ${counts["Hung up"]}</span>
+                                    <span class="stat-chip" style="background: #faf5ff; color: #6b21a8;">Voicemail: ${counts["Voicemail"]}</span>
+                                    <span class="stat-chip" style="background: #fffbeb; color: #92400e;">Not interested: ${counts["Not interested"]}</span>
+                                    <span class="stat-chip" style="background: #eff6ff; color: #1e40af;">Do not Call: ${counts["Do not Call"]}</span>
+                                    <span class="stat-chip" style="background: #f0fdf4; color: #166534;">Follow up: ${counts["Follow up"]}</span>
+                                    <span class="stat-chip" style="background: #f0fdfa; color: #115e59;">Sale Closed: ${counts["Sale Closed"]}</span>
+                                    <span class="stat-chip" style="background: #0f172a; color: white; margin-left: auto;">Ratio: ${ratio}%</span>
+                                </div>
+                            </div>`;
+                    });
+                });
+
+                if (!hasReports) {
+                    container.innerHTML = `<p style="color: #64748b; text-align: center; padding: 40px; font-style: italic;">No shift reports found for USA timezone.</p>`;
+                    return;
+                }
+                container.innerHTML = html + `</div>`;
+            }
+        }
+
+        function exportCSV() {
+            let csv = "Agent Name,USA Shift Date,Total Calls,Hung up,Voicemail,Not interested,Do not Call,Follow up,Sale Closed,Pickup Ratio\n";
+            let allAgents = new Set([...Object.keys(globalCallLogs), ...Object.keys(globalReports)]);
+
+            allAgents.forEach(name => {
+                let logs = globalCallLogs[name] || [];
+                if (logs && typeof logs === 'object' && !Array.isArray(logs)) logs = Object.values(logs);
+                
+                let reps = globalReports[name] || [];
+                if (reps && typeof reps === 'object' && !Array.isArray(reps)) reps = Object.values(reps);
+
+                let allAgentLogs = [...logs];
+                reps.forEach(r => {
+                    if (r.logs) {
+                        let rLogs = Array.isArray(r.logs) ? r.logs : Object.values(r.logs);
+                        allAgentLogs = allAgentLogs.concat(rLogs);
+                    } else if (r.date && r.status) {
+                        allAgentLogs.push(r);
+                    }
+                });
+
+                let filteredLogs = allAgentLogs.filter(l => isDateInRange(l.shiftDate || l.date));
+
+                let datesMap = {};
+                filteredLogs.forEach(l => {
+                    let d = (l.shiftDate || l.date || startDateStr).substring(0, 10);
+                    if (!datesMap[d]) datesMap[d] = [];
+                    datesMap[d].push(l);
+                });
+
+                Object.keys(datesMap).forEach(dateStr => {
+                    let finalLogs = datesMap[dateStr];
+                    let counts = { "Hung up": 0, "Voicemail": 0, "Not interested": 0, "Do not Call": 0, "Follow up": 0, "Sale Closed": 0 };
+                    finalLogs.forEach(l => {
+                        let st = l.status || "Hung up";
+                        if (counts[st] !== undefined) counts[st]++;
+                        else counts["Hung up"]++;
+                    });
+
+                    let totalC = finalLogs.length;
+                    let connected = totalC - counts["Voicemail"];
+                    let ratio = totalC > 0 ? Math.round((connected / totalC) * 100) : 0;
+
+                    csv += `"${name}","${dateStr}",${totalC},${counts["Hung up"]},${counts["Voicemail"]},${counts["Not interested"]},${counts["Do not Call"]},${counts["Follow up"]},${counts["Sale Closed"]},"${ratio}%"\n`;
+                });
+            });
+
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${currentClient}_USA_Reports_${startDateStr}_to_${endDateStr}.csv`;
+            link.click();
+        }
+    </script>
+</body>
+</html>

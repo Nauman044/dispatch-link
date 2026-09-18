@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dispatch Link</title>
+    <meta name="Professional U.S. freight dispatch CRM and FMCSA data scrapping solution. Manage loads, track calls, and scale your fleet efficiently. Contact: 03700684849">
+    <style>
+        body { font-family: sans-serif; background-color: #f4f6f9; padding: 20px; color: #333; }
+        .container { max-width: 1250px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h2 { color: #002d62; border-bottom: 2px solid #eeecf2; padding-bottom: 10px; }
+        .input-group { display: flex; gap: 15px; margin-bottom: 20px; }
+        .input-field { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        .btn-container { display: flex; gap: 10px; margin-bottom: 20px; }
+        button { padding: 12px 20px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-start { background-color: #002d62; color: white; }
+        .btn-stop { background-color: #d9534f; color: white; }
+        .btn-download { background-color: #5cb85c; color: white; display: none; }
+        #status { font-weight: bold; margin-bottom: 15px; padding: 10px; background: #eef1f6; border-left: 4px solid #002d62; }
+        table { width: 100%; border-collapse: collapse; text-align: left; margin-top: 10px; }
+        th, td { padding: 12px; border-bottom: 1px solid #e0e0e0; font-size: 13px; }
+        th { background-color: #f8f9fa; color: #002d62; }
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; display: inline-block; text-transform: uppercase; }
+        .badge-active { background-color: #d4edda; color: #155724; }
+        .badge-inactive { background-color: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Dispatch Link</h2>
+    <div class="input-group">
+        <div class="input-field">
+            <label>Starting MC Number:</label>
+            <input type="number" id="startMc" value="0">
+        </div>
+        <div class="input-field">
+            <label>Ending MC Number:</label>
+            <input type="number" id="endMc" value="0">
+        </div>
+    </div>
+    <div class="btn-container">
+        <button class="btn-start" id="startBtn" onclick="startScraping()">Start Scanning</button>
+        <button class="btn-stop" id="stopBtn" onclick="stopScraping()" style="display:none;">Stop</button>
+        <button class="btn-download" id="downloadBtn" onclick="downloadCSV()">Download Excel/CSV</button>
+    </div>
+    <div id="status">Status: Enter range and click Start.</div>
+    <table>
+        <thead>
+            <tr>
+                <th>MC Number</th>
+                <th>USDOT</th>
+                <th>Company Name</th>
+                <th>Entity Type</th>
+                <th>Operating Status</th>
+                <th>Phone</th>
+                <th>Address</th>
+                <th>Email</th>
+                <th>Power Units</th>
+            </tr>
+        </thead>
+        <tbody id="resultsTable">
+            <tr><td colspan="9" style="text-align:center; color:#999;">No data loaded yet.</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<script src="scraper-core.js"></script>
+</body>
+</html>
