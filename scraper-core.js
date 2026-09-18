@@ -93,11 +93,13 @@ function getCurrentShiftDateKey() {
     return `${uYear}-${uMonth}-${uDay}`;
 }
 
+// Check shift change and clear local temp data automatically
 function checkAndClearLocalStorageOnShiftChange() {
     let currentShiftKey = getCurrentShiftDateKey();
     let lastShiftKey = localStorage.getItem(`dl_shift_date_tracker_${currentClient}`);
 
     if (lastShiftKey && lastShiftKey !== currentShiftKey) {
+        console.log("New USA Shift detected! Clearing temporary local storage data...");
         let keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
@@ -110,6 +112,7 @@ function checkAndClearLocalStorageOnShiftChange() {
     localStorage.setItem(`dl_shift_date_tracker_${currentClient}`, currentShiftKey);
 }
 
+// ====== FIREBASE 7-DAYS CLEANUP (ALLOWED USERS SAFE) ======
 async function cleanupOldFirebaseData() {
     if (!currentClient || !dispatcherNickname) return;
     
@@ -124,6 +127,7 @@ async function cleanupOldFirebaseData() {
             let sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
             
+            // Sirf pichle 7 din ke andarkay logs ko filter kar ke rakhein
             let filteredLogs = remoteLogs.filter(log => {
                 if (!log.shiftDate) return false;
                 let logDate = new Date(log.shiftDate);
@@ -135,6 +139,7 @@ async function cleanupOldFirebaseData() {
                     method: 'PUT',
                     body: JSON.stringify(filteredLogs)
                 });
+                console.log("Cleaned up Firebase call logs older than 7 days (allowedUsers untouched).");
             }
         }
     } catch (e) {
@@ -209,138 +214,6 @@ function showPremiumNotification(message, duration = 4500) {
     setTimeout(() => { toast.style.top = "20px"; toast.style.opacity = "1"; }, 100);
     setTimeout(() => { toast.style.top = "-100px"; toast.style.opacity = "0"; setTimeout(() => toast.remove(), 400); }, duration);
 }
-
-// ====== MOTIVATIONAL QUOTES ======
-const motivationalQuotes = [
-    "Consistency is what transforms average into excellence.",
-    "Your attitude determines your direction in dispatching.",
-    "Push harder today than you did yesterday if you want a better tomorrow.",
-    "Success doesn't just find you. You have to go out and get it.",
-    "Great things never come from comfort zones.",
-    "Believe in yourself and all that you are capable of achieving.",
-    "Every call brings you one step closer to closing the deal."
-];
-
-function showMotivationalPopup() {
-    let randomQuote = motivationalQuotes[Math.floor(Math.random() * motivationalQuotes.length)];
-    let toast = document.createElement('div');
-    toast.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 4px;">
-            <span style="font-size: 10px; color: #ffc107; text-transform: uppercase; font-weight: bold;">💡 Daily Motivation</span>
-            <span style="font-size: 12px; font-style: italic;">"${randomQuote}"</span>
-        </div>
-    `;
-    toast.style.cssText = `
-        position: fixed; bottom: 20px; left: 20px; background: #001a3a; color: #ffffff; padding: 12px 18px; border-radius: 6px; font-family: sans-serif; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border-left: 4px solid #ffc107; z-index: 100000; max-width: 280px;
-    `;
-    document.body.appendChild(toast);
-    setTimeout(() => { toast.remove(); }, 6000);
-}
-
-// ====== MOTUS RANGE DATA FETCHER & PUSH TO CRM MODULE ======
-window.openMotusRangeModal = function() {
-    let existing = document.getElementById('dlMotusRangeModal');
-    if (existing) existing.remove();
-
-    let modal = document.createElement('div');
-    modal.id = 'dlMotusRangeModal';
-    modal.style.cssText = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000000; display: flex; align-items: center; justify-content: center; font-family: sans-serif;";
-    
-    modal.innerHTML = `
-        <div style="background: white; width: 380px; border-radius: 10px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); overflow: hidden;">
-            <div style="background: #0284c7; color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 16px;">🌐 Motus Range Data Fetcher</h3>
-                <button onclick="document.getElementById('dlMotusRangeModal').remove()" style="background: none; border: none; color: white; font-size: 22px; cursor: pointer; font-weight: bold;">&times;</button>
-            </div>
-            <div style="padding: 20px;">
-                <div style="margin-bottom: 12px;">
-                    <label style="display: block; font-size: 12px; font-weight: bold; color: #333; margin-bottom: 5px;">Start Date:</label>
-                    <input type="date" id="motusStartDate" style="width: 100%; padding: 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-size: 12px; font-weight: bold; color: #333; margin-bottom: 5px;">End Date:</label>
-                    <input type="date" id="motusEndDate" style="width: 100%; padding: 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                </div>
-                <div style="margin-bottom: 15px;">
-                    <label style="display: block; font-size: 12px; font-weight: bold; color: #333; margin-bottom: 5px;">Search Query / Keyword:</label>
-                    <input type="text" id="motusQueryKey" placeholder="e.g. Logistics, Fleet, Transport" value="Transport" style="width: 100%; padding: 8px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box;">
-                </div>
-                <button onclick="executeMotusRangeFetchAndPushCRM()" style="background: #0284c7; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; width: 100%; transition: background 0.2s;">Fetch & Push to CRM 🚀</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-};
-
-window.executeMotusRangeFetchAndPushCRM = async function() {
-    let sDate = document.getElementById('motusStartDate').value;
-    let eDate = document.getElementById('motusEndDate').value;
-    let queryKey = document.getElementById('motusQueryKey').value.trim();
-
-    if (!sDate || !eDate) {
-        alert("Please select both Start Date and End Date.");
-        return;
-    }
-
-    document.getElementById('dlMotusRangeModal').remove();
-    showPremiumNotification(`Fetching Motus data records from ${sDate} to ${eDate}...`, 4000);
-
-    try {
-        let proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent('https://www.motus.com/?s=' + (queryKey || 'fleet'))}`;
-        let response = await fetch(proxyUrl);
-        let jsonRes = await response.json();
-
-        // Simulated parsed records from Motus range data payload to push directly into CRM table
-        let mockMotusRecords = [
-            { mc: "MOTUS-101", usdot: "990011", name: "Motus Fleet Partner LLC", entityType: "CARRIER", status: "AUTHORIZED", phone: "555-019-2831", address: "Dallas, TX 75201", email: "dispatch@motuspartner.com", powerUnits: "12", vehicleType: "Truck Tractors", carrierDetails: "Motus Verified, Reefer", remarks: "Imported via Motus Range", followUpDate: "", followUpTime: "", sharedBy: dispatcherNickname },
-            { mc: "MOTUS-102", usdot: "990022", name: "Apex Logistics Group", entityType: "CARRIER", status: "AUTHORIZED", phone: "555-882-9102", address: "Chicago, IL 60601", email: "contact@apexlogistics.io", powerUnits: "24", vehicleType: "Straight Trucks", carrierDetails: "Motus Verified, Dry Van", remarks: "Imported via Motus Range", followUpDate: "", followUpTime: "", sharedBy: dispatcherNickname }
-        ];
-
-        let tableBody = document.getElementById('resultsTable');
-        if (!tableBody) {
-            alert("CRM table not found on page.");
-            return;
-        }
-
-        mockMotusRecords.forEach(record => {
-            let isExists = scrapedData.some(r => r.mc === record.mc);
-            if (!isExists) {
-                scrapedData.push(record);
-                let recordIndex = scrapedData.length - 1;
-                let emailCellMarkup = buildEmailCellMarkup(record.email, record.name);
-                let phoneCellMarkup = buildPhoneCellMarkup(record.phone);
-
-                let newRow = document.createElement('tr');
-                newRow.innerHTML = `
-                    <td><b>${record.mc}</b></td>
-                    <td>${record.usdot}</td>
-                    <td>${record.name}</td>
-                    <td>${record.entityType}</td>
-                    <td><span class="badge badge-active">${record.status}</span></td>
-                    ${phoneCellMarkup}
-                    <td>${record.address}</td>
-                    ${emailCellMarkup}
-                    <td>${record.powerUnits}</td>
-                    <td style="white-space: nowrap !important;"><b>${record.vehicleType || 'N/A'}</b></td>
-                    <td class="remarks-cell-container">
-                        <textarea class="remarks-input-field" placeholder="Click to add remarks..." onfocus="remarksFocus(${recordIndex}, this)" onblur="remarksBlur(${recordIndex}, this)" oninput="syncRemarksData(${recordIndex}, this)">${record.remarks}</textarea>
-                    </td>
-                    <td><button onclick="addLeadToFollowUpList(${recordIndex}, this)" class="premium-followup-btn">Follow</button></td>
-                `;
-                tableBody.appendChild(newRow);
-            }
-        });
-
-        populateStateDropdown();
-        populateVehicleTypeCheckboxes();
-        applyAdvancedFilters();
-        showPremiumNotification(`Successfully pushed ${mockMotusRecords.length} Motus records into CRM!`, 5000);
-
-    } catch (e) {
-        console.error("Motus range fetch error:", e);
-        alert("Failed to fetch Motus data range. Check network.");
-    }
-};
 
 // ====== PROFESSIONAL LOGIN SCREEN WITH SHOW/HIDE PASSWORD ======
 function renderLoginScreen() {
@@ -437,7 +310,6 @@ function setupDispatcherIdentity() {
             saveAppDataToIndexedDB("settings", { key: "agent_nickname", value: dispatcherNickname });
         }
         injectNicknameProfileUI();
-        showMotivationalPopup();
     });
 }
 
@@ -451,9 +323,6 @@ function injectNicknameProfileUI() {
     
     panel.innerHTML = `
         <div style="display: flex; align-items: center; gap: 12px;">
-            <button onclick="openMotusRangeModal()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px rgba(2,132,199,0.25);" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">
-                🌐 Motus Date Range & CRM
-            </button>
             <button onclick="openCallingDetailModal()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px rgba(245,158,11,0.25);" onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
                 📞 Today Calls
             </button>
@@ -547,6 +416,8 @@ async function initializeAccessControl() {
     showPremiumNotification(`License Active: Verified for "${currentClient}" (Expires: ${clientConfig.expires})`);
 
     performAutomaticDataCleanup();
+    
+    // Firebase 7-days cleanup (allowedUsers safe rahega, IndexedDB untouched)
     cleanupOldFirebaseData();
 
     await checkGlobalSessions();
@@ -2453,6 +2324,7 @@ window.startScraping = async function(overrideStart = null, overrideEnd = null) 
     const start = overrideStart !== null ? overrideStart : parseInt(document.getElementById('startMc').value);
     const end = overrideEnd !== null ? overrideEnd : parseInt(document.getElementById('endMc').value);
 
+   // SAFE STATUS INITIALIZER
     try {
         let statusBox = document.getElementById('status');
         if (statusBox) {
