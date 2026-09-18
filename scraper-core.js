@@ -480,7 +480,7 @@ async function checkGlobalSessions() {
         const data = await res.json() || {};
         
         let activeSessionsMap = {};
-        const offlineThreshold = 12000;
+        const offlineThreshold = 3000;
 
         Object.keys(data).forEach(key => {
             let session = data[key];
