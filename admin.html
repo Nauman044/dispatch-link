@@ -435,7 +435,7 @@
             }
         }
 
-        // Remote Session Termination / Kill Session Function
+        // Remote Session Termination / Kill Session Function across all DB URLs
         async function terminateSession(sessionKey) {
             if (!confirm(`Are you sure you want to remotely terminate session ID: ${sessionKey}?`)) return;
             
@@ -497,7 +497,7 @@
             summaryBtn.style.display = 'flex';
 
             if (tab === 'online') {
-                pageTitle.innerText = "Online Users";
+                pageTitle.innerText = "Online Users & Profiles";
                 renderContent();
             } else if (tab === 'leaderboard') {
                 pageTitle.innerText = "Top Calling Leaderboard";
@@ -619,18 +619,22 @@
                         }
                     }
 
-                    let borderColor = '#22c55e';
-                    
+                    // Display browser profile / fingerprint indicator if available
+                    let profileTag = sObj.profileId ? `<div style="font-size: 11px; color: #64748b; margin-top: 2px;">Profile ID: <code>${sObj.profileId.substring(0, 10)}...</code></div>` : '';
+
                     html += `
-                        <div class="card" style="margin-bottom:0; align-items: flex-start; flex-direction: column; gap: 12px; border-left: 4px solid ${borderColor}; width: 100%;">
+                        <div class="card" style="margin-bottom:0; align-items: flex-start; flex-direction: column; gap: 12px; border-left: 4px solid #22c55e; width: 100%;">
                             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px; word-break: break-all;">
                                     <b style="font-size: 15px; color: #0f172a;">${name}</b>
                                 </div>
                                 <span class="badge badge-online"><span class="online-dot"></span>Online</span>
                             </div>
-                            <div style="font-size: 13px; color: #334155; width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                                <span>Login: <b style="color: #0f172a;">${login12Hr}</b></span>
+                            <div style="width: 100%;">
+                                <div style="font-size: 13px; color: #334155;">Login: <b style="color: #0f172a;">${login12Hr}</b></div>
+                                ${profileTag}
+                            </div>
+                            <div style="width: 100%; display: flex; justify-content: flex-end;">
                                 <button onclick="terminateSession('${sessionKey}')" class="btn-danger" title="Remotely Terminate Session">Kill Session 🛑</button>
                             </div>
                         </div>`;
