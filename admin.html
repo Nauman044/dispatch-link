@@ -109,6 +109,9 @@
         .btn-info { background: #0284c7; color: white; border: none; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
         .btn-info:hover { background: #0369a1; }
 
+        .btn-danger { background: #dc2626; color: white; border: none; padding: 6px 12px; font-size: 11px; font-weight: 600; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: 0.2s; white-space: nowrap; }
+        .btn-danger:hover { background: #b91c1c; }
+
         .btn-refresh-top { background: #0f172a; color: white; border: none; padding: 8px 14px; font-size: 12px; font-weight: 600; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; transition: 0.2s; white-space: nowrap; }
         .btn-refresh-top:hover { background: #1e293b; }
 
@@ -259,6 +262,7 @@
         let currentClient = "";
         let activeTab = 'online';
         let globalSessions = {}, globalReports = {}, globalCallLogs = {};
+        let activeDatabases = [];
         let calendarPicker = null;
 
         async function fetchAllowedUsersFromFirebase() {
@@ -372,7 +376,6 @@
         let endDateStr = todayStr;
 
         let dbRefsInitialized = false;
-        let activeDatabases = [];
 
         async function fetchAdminData() {
             if (!currentClient) return;
@@ -432,12 +435,29 @@
             }
         }
 
+        // Remote Session Termination / Kill Session Function
+        async function terminateSession(sessionKey) {
+            if (!confirm(`Are you sure you want to remotely terminate session ID: ${sessionKey}?`)) return;
+            
+            try {
+                let deletePromises = activeDatabases.map(db => {
+                    return db.ref(`sessions/${currentClient}/${sessionKey}`).remove();
+                });
+                await Promise.all(deletePromises);
+                alert("Session successfully terminated.");
+                fetchAdminData();
+            } catch (e) {
+                console.error("Failed to terminate session:", e);
+                alert("Error terminating session. Please try again.");
+            }
+        }
+
         function updateLicenseStatsWidget() {
             if (!currentClient || !allowedUsers[currentClient]) return;
             let maxLimit = allowedUsers[currentClient].maxLaptops || 0;
             let now = Date.now();
             let activeCount = 0;
-            const offlineThreshold = 180000; // Updated to 3 minutes (180 seconds)
+            const offlineThreshold = 180000;
 
             if (globalSessions) {
                 Object.keys(globalSessions).forEach(k => {
@@ -566,48 +586,22 @@
             let container = document.getElementById('adminBodyContent');
             if(!container) return;
             let now = Date.now();
-            const offlineThreshold = 180000; // Updated to 3 minutes (180 seconds)
+            const offlineThreshold = 180000;
 
             if (activeTab === 'online') {
                 let html = `<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px;">`;
                 
-                // Track active sessions per agent name to detect double tabs
-                let activeNameCounts = {};
-                if (globalSessions) {
-                    Object.keys(globalSessions).forEach(key => {
-                        let sObj = globalSessions[key];
-                        let name = sObj?.nickname || sObj?.name || key;
-                        let lastActiveTime = sObj?.timestamp || sObj?.lastActive || 0;
-                        let isOnline = (lastActiveTime && (now - lastActiveTime < offlineThreshold)) || lastActiveTime === 0;
-                        if (isOnline) {
-                            activeNameCounts[name] = (activeNameCounts[name] || 0) + 1;
-                        }
-                    });
-                }
-
-                let uniqueUsers = {};
-                if (globalSessions) {
-                    Object.keys(globalSessions).forEach(key => {
-                        let sObj = globalSessions[key];
-                        let name = sObj?.nickname || sObj?.name || key;
-                        // Keep the most recent session object if multiple exist for the same name
-                        if (!uniqueUsers[name] || (sObj?.timestamp > (uniqueUsers[name].timestamp || 0))) {
-                            uniqueUsers[name] = { ...sObj, resolvedName: name, lastActive: sObj?.timestamp || sObj?.lastActive || 0 };
-                        }
-                    });
-                }
-
-                let userKeys = Object.keys(uniqueUsers);
-                if (userKeys.length === 0) {
-                    container.innerHTML = `<p style="color: #64748b; text-align: center; padding: 40px; font-style: italic;">No users detected for company: <b>${currentClient}</b></p>`;
+                let sessionKeys = Object.keys(globalSessions || {});
+                if (sessionKeys.length === 0) {
+                    container.innerHTML = `<p style="color: #64748b; text-align: center; padding: 40px; font-style: italic;">No active sessions detected for company: <b>${currentClient}</b></p>`;
                     return;
                 }
 
                 let renderedCount = 0;
-                userKeys.forEach(nameKey => {
-                    let uData = uniqueUsers[nameKey];
-                    let displayName = uData.resolvedName || nameKey;
-                    let lastActiveTime = uData.lastActive || 0;
+                sessionKeys.forEach(sessionKey => {
+                    let sObj = globalSessions[sessionKey];
+                    let name = sObj?.nickname || sObj?.name || sessionKey;
+                    let lastActiveTime = sObj?.timestamp || sObj?.lastActive || 0;
                     
                     let isOnline = lastActiveTime && (now - lastActiveTime < offlineThreshold);
                     if (!isOnline && lastActiveTime === 0) isOnline = true;
@@ -616,33 +610,28 @@
                     renderedCount++;
                     
                     let login12Hr = 'N/A';
-                    if (uData.loginTime) {
-                        let parsedDate = new Date(uData.loginTime);
+                    if (sObj.loginTime) {
+                        let parsedDate = new Date(sObj.loginTime);
                         if (!isNaN(parsedDate)) {
                             login12Hr = parsedDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
                         } else {
-                            login12Hr = uData.loginTime;
+                            login12Hr = sObj.loginTime;
                         }
                     }
 
-                    // Check if this user has opened double tabs/sessions
-                    let sessionCount = activeNameCounts[displayName] || 1;
-                    let doubleTabBadge = sessionCount > 1 
-                        ? `<span class="badge badge-warning">⚠️ Double Tab (${sessionCount} Active)</span>` 
-                        : `<span class="badge badge-online"><span class="online-dot"></span>Online</span>`;
-                    
-                    let borderColor = sessionCount > 1 ? '#dc2626' : '#22c55e';
+                    let borderColor = '#22c55e';
                     
                     html += `
                         <div class="card" style="margin-bottom:0; align-items: flex-start; flex-direction: column; gap: 12px; border-left: 4px solid ${borderColor}; width: 100%;">
                             <div style="display: flex; justify-content: space-between; width: 100%; align-items: center; gap: 8px;">
                                 <div style="display: flex; align-items: center; gap: 8px; word-break: break-all;">
-                                    <b style="font-size: 15px; color: #0f172a;">${displayName}</b>
+                                    <b style="font-size: 15px; color: #0f172a;">${name}</b>
                                 </div>
-                                ${doubleTabBadge}
+                                <span class="badge badge-online"><span class="online-dot"></span>Online</span>
                             </div>
-                            <div style="font-size: 13px; color: #334155; width: 100%;">
-                                Login: <b style="color: #0f172a;">${login12Hr}</b>
+                            <div style="font-size: 13px; color: #334155; width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                                <span>Login: <b style="color: #0f172a;">${login12Hr}</b></span>
+                                <button onclick="terminateSession('${sessionKey}')" class="btn-danger" title="Remotely Terminate Session">Kill Session 🛑</button>
                             </div>
                         </div>`;
                 });
