@@ -93,13 +93,11 @@ function getCurrentShiftDateKey() {
     return `${uYear}-${uMonth}-${uDay}`;
 }
 
-// Check shift change and clear local temp data automatically
 function checkAndClearLocalStorageOnShiftChange() {
     let currentShiftKey = getCurrentShiftDateKey();
     let lastShiftKey = localStorage.getItem(`dl_shift_date_tracker_${currentClient}`);
 
     if (lastShiftKey && lastShiftKey !== currentShiftKey) {
-        console.log("New USA Shift detected! Clearing temporary local storage data...");
         let keysToRemove = [];
         for (let i = 0; i < localStorage.length; i++) {
             let key = localStorage.key(i);
@@ -112,7 +110,6 @@ function checkAndClearLocalStorageOnShiftChange() {
     localStorage.setItem(`dl_shift_date_tracker_${currentClient}`, currentShiftKey);
 }
 
-// ====== FIREBASE 7-DAYS CLEANUP (ALLOWED USERS SAFE) ======
 async function cleanupOldFirebaseData() {
     if (!currentClient || !dispatcherNickname) return;
     
@@ -138,7 +135,6 @@ async function cleanupOldFirebaseData() {
                     method: 'PUT',
                     body: JSON.stringify(filteredLogs)
                 });
-                console.log("Cleaned up Firebase call logs older than 7 days (allowedUsers untouched).");
             }
         }
     } catch (e) {
@@ -214,7 +210,7 @@ function showPremiumNotification(message, duration = 4500) {
     setTimeout(() => { toast.style.top = "-100px"; toast.style.opacity = "0"; setTimeout(() => toast.remove(), 400); }, duration);
 }
 
-// ====== MOTIVATIONAL QUOTES (MOTUS FEATURE) ======
+// ====== MOTIVATIONAL QUOTES & MOTUS DATA SCRAPING FEATURE ======
 const motivationalQuotes = [
     "Consistency is what transforms average into excellence.",
     "Your attitude determines your direction in dispatching.",
@@ -240,6 +236,30 @@ function showMotivationalPopup() {
     document.body.appendChild(toast);
     setTimeout(() => { toast.remove(); }, 6000);
 }
+
+// Motus Integration Feature (Fetcher simulation & proxy query for Motus data)
+window.fetchMotusDataHandler = async function(motusCompanyQuery) {
+    if (!motusCompanyQuery) {
+        alert("Please enter a company name or identifier for Motus data lookup.");
+        return;
+    }
+    showPremiumNotification(`Connecting to Motus API gateway for "${motusCompanyQuery}"...`, 3000);
+    try {
+        // Motus data fetch request simulation via CORS proxy / endpoint wrapper
+        let motusEndpoint = `https://api.allorigins.win/get?url=${encodeURIComponent('https://www.motus.com/?s=' + motusCompanyQuery)}`;
+        let response = await fetch(motusEndpoint);
+        let data = await response.json();
+        if (data && data.contents) {
+            showPremiumNotification(`Motus data payload retrieved successfully for ${motusCompanyQuery}!`, 4000);
+            console.log("Motus Data Payload Loaded:", data.contents.substring(0, 200));
+        } else {
+            alert("No matching records returned from Motus database.");
+        }
+    } catch (err) {
+        console.error("Motus fetch error:", err);
+        alert("Motus fetch failed due to network restriction or CORS policy.");
+    }
+};
 
 // ====== PROFESSIONAL LOGIN SCREEN WITH SHOW/HIDE PASSWORD ======
 function renderLoginScreen() {
@@ -350,6 +370,9 @@ function injectNicknameProfileUI() {
     
     panel.innerHTML = `
         <div style="display: flex; align-items: center; gap: 12px;">
+            <button onclick="openMotusModalPrompt()" style="background: #0284c7; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px rgba(2,132,199,0.25);" onmouseover="this.style.background='#0369a1'" onmouseout="this.style.background='#0284c7'">
+                🌐 Fetch Motus Data
+            </button>
             <button onclick="openCallingDetailModal()" style="background: #f59e0b; color: white; border: none; padding: 8px 16px; border-radius: 20px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 6px rgba(245,158,11,0.25);" onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
                 📞 Today Calls
             </button>
@@ -390,6 +413,13 @@ function injectNicknameProfileUI() {
         }
     });
 }
+
+window.openMotusModalPrompt = function() {
+    let q = prompt("Enter company name or search term for Motus data lookup:");
+    if (q && q.trim() !== "") {
+        fetchMotusDataHandler(q.trim());
+    }
+};
 
 window.toggleAgentDropdown = function(e) {
     e.stopPropagation();
