@@ -93,7 +93,6 @@ function getCurrentShiftDateKey() {
     return `${uYear}-${uMonth}-${uDay}`;
 }
 
-// Check shift change and clear local temp data automatically
 function checkAndClearLocalStorageOnShiftChange() {
     let currentShiftKey = getCurrentShiftDateKey();
     let lastShiftKey = localStorage.getItem(`dl_shift_date_tracker_${currentClient}`);
@@ -112,7 +111,6 @@ function checkAndClearLocalStorageOnShiftChange() {
     localStorage.setItem(`dl_shift_date_tracker_${currentClient}`, currentShiftKey);
 }
 
-// ====== FIREBASE 7-DAYS CLEANUP (ALLOWED USERS SAFE) ======
 async function cleanupOldFirebaseData() {
     if (!currentClient || !dispatcherNickname) return;
     
@@ -127,7 +125,6 @@ async function cleanupOldFirebaseData() {
             let sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
             
-            // Sirf pichle 7 din ke andarkay logs ko filter kar ke rakhein
             let filteredLogs = remoteLogs.filter(log => {
                 if (!log.shiftDate) return false;
                 let logDate = new Date(log.shiftDate);
@@ -215,7 +212,7 @@ function showPremiumNotification(message, duration = 4500) {
     setTimeout(() => { toast.style.top = "-100px"; toast.style.opacity = "0"; setTimeout(() => toast.remove(), 400); }, duration);
 }
 
-// ====== PROFESSIONAL LOGIN SCREEN WITH SHOW/HIDE PASSWORD ======
+// ====== PROFESSIONAL LOGIN SCREEN ======
 function renderLoginScreen() {
     if (document.getElementById('dlLoginOverlay')) return;
 
@@ -313,7 +310,6 @@ function setupDispatcherIdentity() {
     });
 }
 
-// ====== PROFESSIONAL RIGHT-ALIGNED FLOATING UI & ROUNDED NAME BADGE ======
 function injectNicknameProfileUI() {
     if (document.getElementById('dlNickProfilePanel')) return;
     let heading = document.querySelector('h1, h2, .heading') || document.body;
@@ -416,8 +412,6 @@ async function initializeAccessControl() {
     showPremiumNotification(`License Active: Verified for "${currentClient}" (Expires: ${clientConfig.expires})`);
 
     performAutomaticDataCleanup();
-    
-    // Firebase 7-days cleanup (allowedUsers safe rahega, IndexedDB untouched)
     cleanupOldFirebaseData();
 
     await checkGlobalSessions();
@@ -521,7 +515,7 @@ window.addEventListener('beforeunload', function () {
     navigator.sendBeacon(`${FIREBASE_DB_URL}sessions/${currentClient}/${safeTabKey}.json?_method=DELETE`);
 });
 
-// ====== INDEXEDDB SETUP FOR HISTORY, FOLLOW-UPS & LOGIN ======
+// ====== INDEXEDDB SETUP ======
 let db;
 let currentHistoryId = null;
 let availableCategories = new Set();
@@ -817,7 +811,7 @@ function injectHistoryUIFramework() {
         tModal.innerHTML = `
             <div style="background: white; padding: 25px; border-radius: 8px; width: 340px; box-shadow: 0 4px 20px rgba(0,0,0,0.2);">
                 <h3 style="color: #002d62; margin-top: 0; margin-bottom: 10px; font-size: 16px; border-bottom: 2px solid #002d62; padding-bottom: 8px;">👥 Share with Team Member</h3>
-                <p style="font-size: 12px; color: #6c757d; margin-bottom: 12px;">Select team member (Online or Offline will receive inbox message):</p>
+                <p style="font-size: 12px; color: #6c757d; margin-bottom: 12px;">Select team member:</p>
                 <div id="dlTeamMembersRadioList" style="max-height: 180px; overflow-y: auto; margin-bottom: 15px; border: 1px solid #eee; padding: 8px; border-radius: 4px;"></div>
                 <div style="display: flex; gap: 8px; justify-content: flex-end;">
                     <button onclick="closeTeamSelectModal()" style="background: #6c757d; color: white; border: none; padding: 6px 14px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer;">Cancel</button>
@@ -838,29 +832,23 @@ function injectHistoryUIFramework() {
                 <h3 style="color: #002d62; margin-top: 0; margin-bottom: 5px; font-size: 18px; text-align: center; padding-right: 15px;">What is the Status of this call?</h3>
                 <p style="font-size: 12px; color: #6c757d; text-align: center; margin-bottom: 15px;">Select call status for <b id="dispTargetPhoneNum" style="color: #002d62;"></b></p>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <div onclick="submitCallDisposition('Hung up')" style="background: #ff5252; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 3px 10px rgba(255,82,82,0.3);">
-                        <div style="display: flex; align-items: center; gap: 10px;"><span>📞</span><span>Hung up</span></div>
-                        <div style="width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;"></div>
+                    <div onclick="submitCallDisposition('Hung up')" style="background: #ff5252; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        <span>📞 Hung up</span>
                     </div>
-                    <div onclick="submitCallDisposition('Voicemail')" style="background: #9c27b0; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 3px 10px rgba(156,39,176,0.3);">
-                        <div style="display: flex; align-items: center; gap: 10px;"><span>📭</span><span>Voicemail</span></div>
-                        <div style="width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;"></div>
+                    <div onclick="submitCallDisposition('Voicemail')" style="background: #9c27b0; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        <span>📭 Voicemail</span>
                     </div>
-                    <div onclick="submitCallDisposition('Not interested')" style="background: #ff9800; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 3px 10px rgba(255,152,0,0.3);">
-                        <div style="display: flex; align-items: center; gap: 10px;"><span>👎</span><span>Not interested</span></div>
-                        <div style="width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;"></div>
+                    <div onclick="submitCallDisposition('Not interested')" style="background: #ff9800; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        <span>👎 Not interested</span>
                     </div>
-                    <div onclick="submitCallDisposition('Do not Call')" style="background: #2196f3; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 3px 10px rgba(33,150,243,0.3);">
-                        <div style="display: flex; align-items: center; gap: 10px;"><span>🚫</span><span>Do not Call</span></div>
-                        <div style="width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;"></div>
+                    <div onclick="submitCallDisposition('Do not Call')" style="background: #2196f3; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        <span>🚫 Do not Call</span>
                     </div>
-                    <div onclick="submitCallDisposition('Follow up')" style="background: #4caf50; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 3px 10px rgba(76,175,80,0.3);">
-                        <div style="display: flex; align-items: center; gap: 10px;"><span>📅</span><span>Follow up</span></div>
-                        <div style="width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;"></div>
+                    <div onclick="submitCallDisposition('Follow up')" style="background: #4caf50; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        <span>📅 Follow up</span>
                     </div>
-                    <div onclick="submitCallDisposition('Sale Closed')" style="background: #009688; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px; box-shadow: 0 3px 10px rgba(0,150,136,0.3);">
-                        <div style="display: flex; align-items: center; gap: 10px;"><span>🤝</span><span>Sale Closed</span></div>
-                        <div style="width: 20px; height: 20px; border: 2px solid white; border-radius: 50%; display: flex; align-items: center; justify-content: center;"></div>
+                    <div onclick="submitCallDisposition('Sale Closed')" style="background: #009688; color: white; padding: 12px 16px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 14px;">
+                        <span>🤝 Sale Closed</span>
                     </div>
                 </div>
             </div>
@@ -918,20 +906,14 @@ function toggleCategoryDropdown(e) {
     e.stopPropagation();
     let list = document.getElementById('categoryDropdownCheckList');
     if (list) {
-        if (list.classList.contains('visible')) {
-            list.classList.remove('visible');
-        } else {
-            list.classList.add('visible');
-        }
+        list.classList.toggle('visible');
     }
 }
 
 window.addEventListener('click', function(event) {
     if (!event.target.closest('#categoryDropdownCheckList')) {
         let list = document.getElementById('categoryDropdownCheckList');
-        if (list && list.classList.contains('visible')) {
-            list.classList.remove('visible');
-        }
+        if (list) list.classList.remove('visible');
     }
 });
 
@@ -980,7 +962,7 @@ function injectAdvancedFilterBar() {
             <div style="position: relative; display: inline-block;">
                 <button type="button" onclick="toggleVehicleDropdown(event)" style="background: white; border: 1px solid #b6ccfe; padding: 6px 12px; font-size: 12px; border-radius: 4px; color: #002d62; font-weight: bold; cursor: pointer;">Select Vehicle Types ▼</button>
                 <div id="vehicleTypeDropdownContent" style="display: none; position: absolute; background: white; border: 1px solid #b6ccfe; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 10px 12px; border-radius: 6px; z-index: 1000; width: 170px; top: 100%; left: 0; margin-top: 4px; text-align: left; box-sizing: border-box;">
-                    <div style="font-size: 11px; font-weight: bold; color: #666; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px; text-align: left;">Filter by Vehicle:</div>
+                    <div style="font-size: 11px; font-weight: bold; color: #666; margin-bottom: 6px; border-bottom: 1px solid #eee; padding-bottom: 4px;">Filter by Vehicle:</div>
                     <div id="vehicleCheckboxList"></div>
                 </div>
             </div>
@@ -1042,23 +1024,12 @@ function populateStateDropdown() {
         return nameA.localeCompare(nameB);
     });
 
-    let maxLabelLength = 0;
-    sortedCodes.forEach(code => {
-        let fullName = usStatesMap[code] || code;
-        let label = `${fullName} (${code})`;
-        if (label.length > maxLabelLength) maxLabelLength = label.length;
-    });
-
     sortedCodes.forEach(code => {
         let fullName = usStatesMap[code] || code;
         let count = stateCounts[code];
-        let label = `${fullName} (${code})`;
-        let paddingLength = Math.max(2, maxLabelLength - label.length + 4);
-        let spaces = "\u00A0".repeat(paddingLength);
-        
         let opt = document.createElement('option');
         opt.value = code;
-        opt.textContent = `${label}${spaces}${count}`;
+        opt.textContent = `${fullName} (${code}) — [${count}]`;
         select.appendChild(opt);
     });
     select.value = currentVal;
@@ -1077,9 +1048,9 @@ function populateVehicleTypeCheckboxes() {
     fixedTypes.forEach(vType => {
         let isChecked = checkedSet.has(vType) ? "checked" : "";
         html += `
-            <label style="display: flex !important; flex-direction: row !important; align-items: center !important; justify-content: flex-start !important; gap: 8px !important; font-size: 12px !important; margin-bottom: 8px !important; cursor: pointer !important; color: #333 !important; text-align: left !important; width: 100% !important; float: none !important;">
-                <input type="checkbox" value="${vType}" ${isChecked} onchange="applyAdvancedFilters()" style="cursor: pointer !important; margin: 0 !important; flex-shrink: 0 !important; float: none !important; display: inline-block !important; width: 14px !important; height: 14px !important;"> 
-                <span style="text-align: left !important; flex: 1 !important; white-space: nowrap !important; display: inline-block !important; visibility: visible !important; opacity: 1 !important; color: #333 !important; font-size: 12px !important;">${vType}</span>
+            <label style="display: flex; align-items: center; gap: 8px; font-size: 12px; margin-bottom: 8px; cursor: pointer; color: #333;">
+                <input type="checkbox" value="${vType}" ${isChecked} onchange="applyAdvancedFilters()" style="cursor: pointer; width: 14px; height: 14px;"> 
+                <span>${vType}</span>
             </label>
         `;
     });
@@ -1232,6 +1203,7 @@ function buildEmailCellMarkup(emailAddress, companyName) {
     `;
 }
 
+// Call log & follow-ups core execution functions...
 let activeCallPhone = null;
 let pendingReviewPhone = null;
 let activeCallCellElement = null;
@@ -1269,9 +1241,6 @@ window.logCallCountWithDisposition = async function(phoneNum, cellElement, dispo
         document.querySelectorAll('.phone-clickable-cell').forEach(el => el.classList.remove('active-called-cell'));
         cellElement.classList.add('active-called-cell');
     }
-
-    let downBtn = document.getElementById('dlScrollDownBtn');
-    if (downBtn) downBtn.style.display = 'none';
 }
 
 window.openDispositionModal = function(phoneNum) {
@@ -1300,7 +1269,6 @@ window.openCallingDetailModal = function() {
     let logs = JSON.parse(localStorage.getItem(`dl_call_logs_${currentClient}_${dispatcherNickname}`)) || [];
     let shiftDateStr = getCurrentShiftDateKey();
     let todayLogs = logs.filter(l => l.shiftDate === shiftDateStr);
-    
     let totalCallsCount = todayLogs.length;
 
     let modal = document.createElement('div');
@@ -1317,10 +1285,7 @@ window.openCallingDetailModal = function() {
                 <div style="display: flex; justify-content: space-between; margin-bottom: 12px; font-size: 15px; border-bottom: 1px solid #eee; padding-bottom: 8px;">
                     <strong>Total Calls Logged:</strong> <span style="font-weight: bold; color: #002d62; font-size: 16px;">${totalCallsCount}</span>
                 </div>
-                
-                <div style="margin-top: 20px; display: flex; gap: 8px;">
-                    <button onclick="document.getElementById('dlCallingDetailModal').remove()" style="background: #6c757d; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; width: 100%;">Close</button>
-                </div>
+                <button onclick="document.getElementById('dlCallingDetailModal').remove()" style="background: #6c757d; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 13px; width: 100%;">Close</button>
             </div>
         </div>
     `;
@@ -1389,6 +1354,7 @@ function buildPhoneCellMarkup(phoneNum) {
     `;
 }
 
+// Follow-ups & Drawer Controls
 let currentFollowUpFilterMode = 'today';
 let pendingFollowUpIndex = null;
 let pendingFollowUpRowBtn = null;
@@ -1444,7 +1410,6 @@ window.confirmFollowUpSchedule = function() {
     record.sharedBy = dispatcherNickname;
 
     saveAppDataToIndexedDB("followups", record);
-    
     showPremiumNotification(`Added MC ${record.mc} for Follow-Up on ${record.followUpDate}`, 3500);
     
     if (pendingFollowUpRowBtn) {
@@ -1528,11 +1493,6 @@ window.deleteFollowUpItem = function(mcNumber) {
         store.delete(mcNumber);
         tx.oncomplete = function() {
             renderFollowUpItems();
-            let tableRows = document.querySelectorAll('#resultsTable tr');
-            tableRows.forEach(row => {
-                let cellMc = parseInt(row.cells[0]?.textContent);
-                if (cellMc === mcNumber) row.style.background = "";
-            });
         };
     }
 };
@@ -1544,589 +1504,7 @@ window.downloadFollowUpsCSV = function() {
     });
 };
 
-let pendingShareRecords = [];
-
-window.openTeamShareModal = async function(recordsToShare) {
-    if (!recordsToShare || recordsToShare.length === 0) return;
-    pendingShareRecords = recordsToShare;
-
-    let radioListDiv = document.getElementById('dlTeamMembersRadioList');
-    if (!radioListDiv) return;
-    radioListDiv.innerHTML = `<div style="text-align: center; color: #6c757d; font-size: 12px; padding: 15px;">Loading team members...</div>`;
-
-    let tModal = document.getElementById('dlTeamSelectModal');
-    if (tModal) tModal.style.display = 'flex';
-
-    try {
-        let [sessionsRes, reportsRes] = await Promise.all([
-            fetch(`${FIREBASE_DB_URL}sessions/${currentClient}.json`),
-            fetch(`${FIREBASE_DB_URL}shift_reports/${currentClient}.json`)
-        ]);
-        let sessionsData = await sessionsRes.json() || {};
-        let reportsData = await reportsRes.json() || {};
-        
-        let allMembers = new Set();
-        Object.keys(sessionsData).forEach(k => {
-            if (sessionsData[k] && sessionsData[k].nickname) allMembers.add(sessionsData[k].nickname);
-        });
-        Object.keys(reportsData).forEach(name => allMembers.add(name));
-
-        let membersList = Array.from(allMembers).filter(n => n !== dispatcherNickname);
-
-        if (membersList.length === 0) {
-            radioListDiv.innerHTML = `<div style="text-align: center; color: #dc3545; font-size: 12px; padding: 15px; font-weight: bold;">No other team members found.</div>`;
-            return;
-        }
-
-        let now = Date.now();
-        let offlineThreshold = 12000;
-
-        let html = "";
-        membersList.forEach((name, idx) => {
-            let userSessionKey = Object.keys(sessionsData).find(k => sessionsData[k].nickname === name);
-            let sObj = userSessionKey ? sessionsData[userSessionKey] : null;
-            let isOnline = sObj && sObj.timestamp && (now - sObj.timestamp < offlineThreshold);
-            let statusText = isOnline ? "Online" : "Offline";
-
-            let checkedAttr = idx === 0 ? "checked" : "";
-            html += `
-                <label style="display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid #f1f3f4; cursor: pointer; font-size: 13px; color: #333;">
-                    <input type="radio" name="teamMemberRadio" value="${name}" ${checkedAttr} style="cursor: pointer;">
-                    <span><b>${name}</b> (${statusText})</span>
-                </label>
-            `;
-        });
-        radioListDiv.innerHTML = html;
-    } catch (e) {
-        console.error("Failed to fetch team members:", e);
-        radioListDiv.innerHTML = `<div style="text-align: center; color: #dc3545; font-size: 12px; padding: 15px;">Error loading team members.</div>`;
-    }
-};
-
-window.closeTeamSelectModal = function() {
-    let tModal = document.getElementById('dlTeamSelectModal');
-    if (tModal) tModal.style.display = 'none';
-    pendingShareRecords = [];
-};
-
-window.confirmTeamShareAction = async function() {
-    let selectedRadio = document.querySelector('input[name="teamMemberRadio"]:checked');
-    if (!selectedRadio) {
-        return alert("Please select a team member from the list.");
-    }
-
-    let targetName = selectedRadio.value;
-    pendingShareRecords.forEach(r => r.sharedBy = dispatcherNickname);
-
-    try {
-        let shareUrl = `${FIREBASE_DB_URL}shared_leads/${currentClient}/${targetName}.json`;
-        let res = await fetch(shareUrl);
-        let existingList = await res.json() || [];
-        if (!Array.isArray(existingList)) existingList = [];
-
-        let addedCount = 0;
-        pendingShareRecords.forEach(rec => {
-            if (!existingList.some(r => r.mc === rec.mc)) {
-                existingList.push(rec);
-                addedCount++;
-            }
-        });
-
-        if (addedCount > 0) {
-            await fetch(shareUrl, {
-                method: 'PUT',
-                body: JSON.stringify(existingList)
-            });
-            showPremiumNotification(`Successfully shared ${addedCount} lead(s) with ${targetName}!`, 4000);
-            
-            document.querySelectorAll('.followup-select-checkbox:checked').forEach(cb => cb.checked = false);
-        } else {
-            alert(`Selected lead(s) are already present in ${targetName}'s shared inbox.`);
-        }
-        closeTeamSelectModal();
-    } catch (e) {
-        console.error("Team share action failed:", e);
-        alert("Failed to share leads with team member. Check connection.");
-    }
-};
-
-window.shareSingleFollowUpToTeam = function(record) {
-    openTeamShareModal([record]);
-};
-
-window.shareSelectedFollowUpsToTeam = function() {
-    let selectedCheckboxes = document.querySelectorAll('.followup-select-checkbox:checked');
-    if (selectedCheckboxes.length === 0) {
-        return alert("Please select at least one follow-up record to share with your team.");
-    }
-
-    getAllAppDataFromIndexedDB("followups", function(followUpStore) {
-        let selectedMCs = Array.from(selectedCheckboxes).map(cb => parseInt(cb.value));
-        let selectedRecords = followUpStore.filter(r => selectedMCs.includes(r.mc));
-        openTeamShareModal(selectedRecords);
-    });
-};
-
-async function pollIncomingSharedLeads() {
-    if (!currentClient || !dispatcherNickname) return;
-    try {
-        let inboxUrl = `${FIREBASE_DB_URL}shared_leads/${currentClient}/${dispatcherNickname}.json`;
-        let res = await fetch(inboxUrl);
-        let sharedLeads = await res.json() || [];
-        if (!Array.isArray(sharedLeads) || sharedLeads.length === 0) return;
-
-        getAllAppDataFromIndexedDB("followups", async function(localFollowUps) {
-            let newLeadsAdded = false;
-            sharedLeads.forEach(lead => {
-                if (!localFollowUps.some(r => r.mc === lead.mc)) {
-                    saveAppDataToIndexedDB("followups", lead);
-                    newLeadsAdded = true;
-                }
-            });
-
-            if (newLeadsAdded) {
-                showPremiumNotification(`You received new shared follow-up leads from your team!`, 5000);
-                if (document.getElementById('dlFollowUpDrawer') && document.getElementById('dlFollowUpDrawer').style.right === "0px") {
-                    renderFollowUpItems();
-                }
-                await fetch(inboxUrl, { method: 'DELETE' });
-            }
-        });
-    } catch (e) {
-        console.error("Polling shared leads failed:", e);
-    }
-}
-
-setInterval(pollIncomingSharedLeads, 60000);
-
-function renderFollowUpItems() {
-    const listContainer = document.getElementById('drawerFollowUpList');
-    if (!listContainer) return;
-
-    getAllAppDataFromIndexedDB("followups", function(data) {
-        data = data.reverse(); 
-
-        let filterQuery = (document.getElementById('followUpSearchInput')?.value || "").toLowerCase().trim();
-        let todayDateStr = new Date().toISOString().split('T')[0];
-
-        if (data.length === 0) {
-            listContainer.innerHTML = `<p style="color: #6c757d; font-size: 13px; font-style: italic; text-align: center; margin-top: 30px;">No follow-up leads saved yet.</p>`;
-            return;
-        }
-
-        let itemsHTML = "";
-        let matchCount = 0;
-
-        data.forEach(item => {
-            let fuDate = item.followUpDate || "N/A";
-            let fuTime = item.followUpTime || "N/A";
-
-            if (currentFollowUpFilterMode === 'today' && fuDate !== todayDateStr) {
-                return;
-            }
-
-            let mcString = (item.mc || "").toString().toLowerCase();
-            let nameString = (item.name || "").toLowerCase();
-            let phoneString = (item.phone || "").toLowerCase();
-
-            if (filterQuery !== "") {
-                let textMatches = mcString.includes(filterQuery) || nameString.includes(filterQuery) || phoneString.includes(filterQuery);
-                if (!textMatches) return;
-            }
-
-            matchCount++;
-            let senderTag = item.sharedBy ? `<span style="background: #28a745; color: white; padding: 2px 6px; border-radius: 3px; font-size: 10px;">Sent by: ${item.sharedBy}</span>` : "";
-
-            itemsHTML += `
-                <div style="background: #fdfdfd; border: 1px solid #e9ecef; border-left: 4px solid #17a2b8; padding: 12px; margin-bottom: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); font-family:sans-serif;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #6c757d; font-weight: bold; margin-bottom: 4px;">
-                        <span>Saved: ${item.addedAt}</span>
-                        <span style="background: #e2eafc; color: #002d62; padding: 2px 6px; border-radius: 3px;">${fuDate} @ ${fuTime}</span>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                        <div style="font-size: 14px; font-weight: bold; color: #002d62;">${item.name}</div>
-                        ${senderTag}
-                    </div>
-                    <div style="font-size: 12px; color:#333;"><b>MC:</b> ${item.mc} | <b>Phone:</b> ${item.phone || 'N/A'}</div>
-                    <div style="font-size: 12px; color:#333; margin-top:3px;"><b>Email:</b> ${item.email || 'N/A'}</div>
-                    <div style="font-size: 12px; color: #555; background: #f1f3f4; padding: 4px 6px; margin-top: 6px; border-radius: 3px; font-style:italic;">
-                        <b>Remarks:</b> ${item.remarks || 'No remarks added'}
-                    </div>
-                    <div style="display: flex; justify-content: flex-end; gap: 5px; margin-top: 8px;">
-                        <button onclick="triggerOneClickEmailPitch('${item.email}', '${item.name.replace(/'/g, "\\'")}')" style="background: #17a2b8; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;">Send</button>
-                        <button onclick="deleteFollowUpItem(${item.mc})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;">Drop</button>
-                    </div>
-                </div>
-            `;
-        });
-
-        if (matchCount === 0) {
-            listContainer.innerHTML = `<p style="color: #6c757d; font-size: 13px; font-style: italic; text-align: center; margin-top: 30px;">No matching follow-up records found for ${currentFollowUpFilterMode === 'today' ? "Today" : "this filter"}.</p>`;
-        } else {
-            listContainer.innerHTML = itemsHTML;
-        }
-
-        if (!document.getElementById('dlBulkFollowUpActionBar')) {
-            let actionBar = document.createElement('div');
-            actionBar.id = 'dlBulkFollowUpActionBar';
-            actionBar.style.cssText = "display: flex; gap: 6px; margin-bottom: 10px; align-items: center; background: #e2eafc; padding: 6px; border-radius: 4px; font-size: 11px;";
-            actionBar.innerHTML = `
-                <label style="cursor: pointer; font-weight: bold; color: #002d62; display: flex; align-items: center; gap: 4px;">
-                    <input type="checkbox" id="selectAllFollowUpsCheckbox" onclick="toggleSelectAllFollowUps(this)"> Select All
-                </label>
-                <button onclick="shareSelectedFollowUpsToTeam()" style="background: #002d62; color: white; border: none; padding: 4px 8px; font-weight: bold; border-radius: 3px; cursor: pointer; flex: 1;" title="Share Selected with Team">Share Selected</button>
-            `;
-            listContainer.parentNode.insertBefore(actionBar, listContainer);
-        }
-
-        let itemDivs = listContainer.querySelectorAll('div[style*="border-left"]');
-        itemDivs.forEach((div, idx) => {
-            if (!div.querySelector('.followup-select-checkbox')) {
-                let record = data[idx];
-                if (!record) return;
-
-                let topHeader = div.querySelector('div');
-                if (topHeader) {
-                    let checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.className = 'followup-select-checkbox';
-                    checkbox.value = record.mc;
-                    checkbox.style.cssText = "margin-right: 6px; cursor: pointer;";
-                    topHeader.insertBefore(checkbox, topHeader.firstChild);
-                }
-
-                let btnContainer = div.querySelector('div[style*="justify-content: flex-end"]');
-                if (btnContainer && !btnContainer.querySelector('.single-team-share-btn')) {
-                    let teamBtn = document.createElement('button');
-                    teamBtn.className = 'single-team-share-btn';
-                    teamBtn.innerHTML = "Share";
-                    teamBtn.style.cssText = "background: #002d62; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 11px; font-weight: bold;";
-                    teamBtn.onclick = () => shareSingleFollowUpToTeam(record);
-                    btnContainer.insertBefore(teamBtn, btnContainer.firstChild);
-                }
-            }
-        });
-    });
-}
-
-window.toggleSelectAllFollowUps = function(masterCheckbox) {
-    let checkboxes = document.querySelectorAll('.followup-select-checkbox');
-    checkboxes.forEach(cb => cb.checked = masterCheckbox.checked);
-};
-
-window.remarksFocus = function(index, textarea) {
-    if (!textarea.value || textarea.value.trim() === "") {
-        textarea.value = DEFAULT_REMARKS_TEMPLATE;
-        if (scrapedData[index]) scrapedData[index].remarks = DEFAULT_REMARKS_TEMPLATE;
-    }
-};
-
-window.remarksBlur = function(index, textarea) {
-    let lines = textarea.value.split('\n');
-    const linesCheck = ["Truck Type:", "Length:", "Accessories:", "Load:", "Zip Code:", "Summary:"];
-    let hasData = false;
-    
-    for(let i = 0; i < 6; i++) {
-        if (lines[i]) {
-            let data = lines[i].replace(linesCheck[i], "").trim();
-            if (data !== "") { hasData = true; break; }
-        }
-    }
-
-    if (!hasData) {
-        textarea.value = "";
-        if (scrapedData[index]) {
-            scrapedData[index].remarks = "";
-            updateRealTimeHistory(scrapedData, false);
-        }
-    }
-};
-
-window.syncRemarksData = function(index, textarea) {
-    if (scrapedData[index]) {
-        scrapedData[index].remarks = textarea.value;
-        updateRealTimeHistory(scrapedData, false);
-    }
-};
-
-function generateCSVString(recordsData) {
-    let csv = "MC Number,USDOT Number,Company Name,Entity Type,Operating Status,Phone,Address,Email,Power Units,Vehicle Type,Carrier Details,Follow-Up Date,Follow-Up Time,Shared By,Remarks\n";
-    recordsData.forEach(r => {
-        let safeRemarks = r.remarks || "";
-        let safeCarrierDetails = r.carrierDetails || "";
-        csv += `${r.mc},${r.usdot},"${r.name}","${r.entityType}","${r.status}","${r.phone}","${r.address}","${r.email}","${r.powerUnits}","${r.vehicleType || 'N/A'}","${safeCarrierDetails}","${r.followUpDate || 'N/A'}","${r.followUpTime || 'N/A'}","${r.sharedBy || dispatcherNickname}","${safeRemarks.replace(/"/g, '""')}"\n`;
-    });
-    return csv;
-}
-
-window.toggleHistoryDrawer = function() {
-    let drawer = document.getElementById('dlHistoryDrawer');
-    let followUpDrawer = document.getElementById('dlFollowUpDrawer');
-    if (!drawer) return;
-    
-    if(followUpDrawer) followUpDrawer.style.right = "-420px"; 
-    
-    if (drawer.style.right === "0px") {
-        drawer.style.right = "-420px";
-    } else {
-        drawer.style.right = "0px";
-        renderHistoryItems();
-    }
-};
-
-function renderHistoryItems() {
-    if (!db) return;
-    const listContainer = document.getElementById('drawerHistoryList');
-    if (!listContainer) return;
-
-    const tx = db.transaction("history", "readonly");
-    const store = tx.objectStore("history");
-    const getAll = store.getAll();
-    
-    getAll.onsuccess = function() {
-        let data = getAll.result || [];
-        data = data.reverse();
-
-        if (data.length === 0) {
-            listContainer.innerHTML = `<p style="color: #6c757d; font-size: 13px; font-style: italic; text-align: center; margin-top: 30px;">No history records found yet.</p>`;
-            return;
-        }
-
-        let itemsHTML = "";
-        data.forEach(item => {
-            let displayStatus = item.status === "Interrupted (Auto-Saved)"
-                ? `<span style="color: #d9534f; font-weight:bold;">${item.status}</span>`
-                : `<span style="color: #28a745; font-weight:bold;">${item.status}</span>`;
-
-            let recordsCount = item.records ? item.records.length : (item.totalRecords || 0);
-
-            let resumeBtnStyle = recordsCount === 0 
-                ? "background: #cccccc; color: #666666; border: none; padding: 5px 10px; border-radius: 4px; cursor: not-allowed; font-size: 12px; font-weight: bold;" 
-                : "background: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;";
-            
-            let csvBtnStyle = recordsCount === 0 
-                ? "background: #cccccc; color: #666666; border: none; padding: 5px 10px; border-radius: 4px; cursor: not-allowed; font-size: 12px; font-weight: bold;" 
-                : "background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;";
-
-            let resumeActionAttr = recordsCount === 0 ? "" : `onclick="resumeHistorySheet(${item.id})"`;
-            let csvActionAttr = recordsCount === 0 ? "" : `onclick="downloadHistoryCSV(${item.id})"`;
-
-            itemsHTML += `
-                <div style="background: #f8f9fa; border: 1px solid #e9ecef; border-left: 4px solid #002d62; padding: 12px; margin-bottom: 10px; border-radius: 6px; font-family: sans-serif;">
-                    <div style="font-size: 11px; color: #6c757d; font-weight: bold;">${item.date}</div>
-                    <div style="font-size: 14px; font-weight: bold; color: #333; margin: 4px 0;">Range: ${item.range}</div>
-                    <div style="font-size: 12px; margin-bottom: 8px;">Status: ${displayStatus}</div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 4px; border-top: 1px solid #eee; padding-top: 8px;">
-                        <span style="background: #e2eafc; color: #002d62; padding: 3px 8px; border-radius: 12px; font-weight: bold; font-size: 11px;">${recordsCount} Active</span>
-                        <div style="display: flex; gap: 4px; align-items: center;">
-                            <button ${resumeActionAttr} style="${resumeBtnStyle}">Resume</button>
-                            <button onclick="loadHistorySheetToTable(${item.id})" style="background: #002d62; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;">Open</button>
-                            <button ${csvActionAttr} style="${csvBtnStyle}">CSV</button>
-                            <button onclick="deleteHistoryItem(${item.id})" style="background: #dc3545; color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Delete">Delete</button>
-                        </div>
-                    </div>
-                </div>
-            `;
-        });
-        listContainer.innerHTML = itemsHTML;
-    };
-}
-
-window.loadHistorySheetToTable = async function(id) {
-    const tx = db.transaction("history", "readonly");
-    const req = tx.objectStore("history").get(id);
-
-    req.onsuccess = async function() {
-        let item = req.result;
-        if (!item || !item.records) return;
-        
-        scrapedData = item.records; 
-        currentHistoryId = item.id;
-
-        availableCategories.clear();
-        scrapedData.forEach(r => {
-            if (r.carrierDetails) {
-                r.carrierDetails.split(', ').forEach(cat => {
-                    if (cat.trim()) availableCategories.add(cat.trim());
-                });
-            }
-        });
-        updateCategoryCheckboxes();
-
-        if (item.range) {
-            let parts = item.range.split('-');
-            if (parts.length === 2) {
-                let startInput = document.getElementById('startMc');
-                let endInput = document.getElementById('endMc');
-                if (startInput) startInput.value = parts[0].trim();
-                if (endInput) endInput.value = parts[1].trim();
-            }
-        }
-
-        const tableBody = document.getElementById('resultsTable');
-        tableBody.innerHTML = '';
-        
-        getAllAppDataFromIndexedDB("followups", function(followUpStore) {
-            for (let index = 0; index < scrapedData.length; index++) {
-                let record = scrapedData[index];
-                let emailCellHTML = buildEmailCellMarkup(record.email, record.name);
-                let phoneCellHTML = buildPhoneCellMarkup(record.phone);
-                
-                let isAlreadyFollowed = followUpStore.some(r => r.mc === record.mc);
-                let rowStyleHTML = isAlreadyFollowed ? `style="background: #d4edda;"` : '';
-                let activeRemarksValue = record.remarks || "";
-
-                tableBody.innerHTML += `<tr ${rowStyleHTML}>
-                    <td><b>${record.mc}</b></td>
-                    <td>${record.usdot}</td>
-                    <td>${record.name}</td>
-                    <td>${record.entityType}</td>
-                    <td><span class="badge badge-active">${record.status}</span></td>
-                    ${phoneCellHTML}
-                    <td>${record.address}</td> 
-                    ${emailCellHTML}
-                    <td>${record.powerUnits}</td>
-                    <td style="white-space: nowrap !important;"><b>${record.vehicleType || 'N/A'}</b></td>
-                    <td class="remarks-cell-container">
-                        <textarea class="remarks-input-field" placeholder="Click to add remarks..." onfocus="remarksFocus(${index}, this)" onblur="remarksBlur(${index}, this)" oninput="syncRemarksData(${index}, this)">${activeRemarksValue}</textarea>
-                    </td>
-                    <td><button onclick="addLeadToFollowUpList(${index}, this)" class="premium-followup-btn">Follow</button></td>
-                </tr>`;
-            }
-            populateStateDropdown();
-            populateVehicleTypeCheckboxes();
-            toggleHistoryDrawer(); 
-        });
-    };
-};
-
-window.resumeHistorySheet = async function(id) {
-    const tx = db.transaction("history", "readonly");
-    const req = tx.objectStore("history").get(id);
-
-    req.onsuccess = async function() {
-        let item = req.result;
-        if (!item || !item.range) return;
-
-        let parts = item.range.split('-');
-        let startRange = parseInt(parts[0].trim());
-        let endRange = parseInt(parts[1].trim());
-
-        let startInput = document.getElementById('startMc');
-        let endInput = document.getElementById('endMc');
-        if (startInput) startInput.value = startRange;
-        if (endInput) endInput.value = endRange;
-
-        scrapedData = item.records || [];
-        currentHistoryId = item.id;
-        window.activeScrapeRange = item.range;
-
-        availableCategories.clear();
-        scrapedData.forEach(r => {
-            if (r.carrierDetails) {
-                r.carrierDetails.split(', ').forEach(cat => {
-                    if (cat.trim()) availableCategories.add(cat.trim());
-                });
-            }
-        });
-        updateCategoryCheckboxes();
-
-        const tableBody = document.getElementById('resultsTable');
-        tableBody.innerHTML = '';
-        
-        getAllAppDataFromIndexedDB("followups", function(followUpStore) {
-            for (let index = 0; index < scrapedData.length; index++) {
-                let record = scrapedData[index];
-                let emailCellHTML = buildEmailCellMarkup(record.email, record.name);
-                let phoneCellHTML = buildPhoneCellMarkup(record.phone);
-                let isAlreadyFollowed = followUpStore.some(r => r.mc === record.mc);
-                let rowStyleHTML = isAlreadyFollowed ? `style="background: #d4edda;"` : '';
-                let activeRemarksValue = record.remarks || "";
-
-                tableBody.innerHTML += `<tr ${rowStyleHTML}>
-                    <td><b>${record.mc}</b></td>
-                    <td>${record.usdot}</td>
-                    <td>${record.name}</td>
-                    <td>${record.entityType}</td>
-                    <td><span class="badge badge-active">${record.status}</span></td>
-                    ${phoneCellHTML}
-                    <td>${record.address}</td> 
-                    ${emailCellHTML}
-                    <td>${record.powerUnits}</td>
-                    <td style="white-space: nowrap !important;"><b>${record.vehicleType || 'N/A'}</b></td>
-                    <td class="remarks-cell-container">
-                        <textarea class="remarks-input-field" placeholder="Click to add remarks..." onfocus="remarksFocus(${index}, this)" onblur="remarksBlur(${index}, this)" oninput="syncRemarksData(${index}, this)">${activeRemarksValue}</textarea>
-                    </td>
-                    <td><button onclick="addLeadToFollowUpList(${index}, this)" class="premium-followup-btn">Follow</button></td>
-                </tr>`;
-            }
-            populateStateDropdown();
-            populateVehicleTypeCheckboxes();
-            toggleHistoryDrawer();
-            
-            let nextStartMc = startRange;
-            if (scrapedData.length > 0) {
-                let maxScannedMc = Math.max(...scrapedData.map(r => parseInt(r.mc)));
-                if (!isNaN(maxScannedMc) && maxScannedMc >= startRange) {
-                    nextStartMc = maxScannedMc + 1;
-                }
-            }
-            
-            startScraping(nextStartMc, endRange);
-        });
-    };
-};
-
-window.downloadHistoryCSV = function(id) {
-    const tx = db.transaction("history", "readonly");
-    const store = tx.objectStore("history");
-    const req = store.get(id);
-    req.onsuccess = function() {
-        let item = req.result;
-        let recordsList = item && item.records ? item.records : [];
-        if (recordsList.length > 0) {
-            triggerCSVDownload(recordsList, `History_MC_${item.range.replace(/\s+/g, '_')}.csv`);
-        }
-    };
-};
-
-window.deleteHistoryItem = function(id) {
-    if (confirm("Delete this sheet from history?")) {
-        const tx = db.transaction("history", "readwrite");
-        const store = tx.objectStore("history");
-        store.delete(id);
-        tx.oncomplete = function() {
-            renderHistoryItems();
-        };
-    }
-};
-
-function triggerCSVDownload(recordsData, filename) {
-    const csv = generateCSVString(recordsData);
-    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    let link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-}
-
-function updateRealTimeHistory(recordsArray, isCompleted = false) {
-    if (!db || currentHistoryId === null) return;
-    const tx = db.transaction("history", "readwrite");
-    const store = tx.objectStore("history");
-    const req = store.get(currentHistoryId);
-    
-    req.onsuccess = function() {
-        const data = req.result;
-        if (data) {
-            data.totalRecords = recordsArray.length;
-            data.records = recordsArray;
-            data.status = isCompleted ? "Completed" : "Interrupted (Auto-Saved)";
-            store.put(data);
-        }
-    };
-}
-
+// Scraping Core Functions
 let scraping = false; 
 let scrapedData = [];
 
@@ -2150,41 +1528,16 @@ async function processSingleMCWithDetailedError(mc, statusBox) {
 
     while (attempt < maxRetries) {
         try {
-            const sessionUrl = `${FIREBASE_DB_URL}sessions/${currentClient}.json`;
-            const sRes = await fetch(sessionUrl);
-            const sData = await sRes.json() || {};
-            let now = Date.now();
-            const offlineThreshold = 12000;
-            
-            let activeCount = 0;
-            Object.keys(sData).forEach(k => {
-                let session = sData[k];
-                if (session && session.timestamp && (now - session.timestamp < offlineThreshold)) {
-                    activeCount++;
-                }
-            });
-
-            if (userLimit > 0 && activeCount > userLimit) {
-                if (statusBox) {
-                    statusBox.innerHTML = `<strong>Global License Limit Exceeded (${activeCount}/${userLimit}). Pausing scraping...</strong>`;
-                }
-                return { status: "limit_exceeded" };
-            }
-
             const snapshotUrl = `https://safer.fmcsa.dot.gov/query.asp?searchtype=ANY&query_type=queryCarrierSnapshot&query_param=MC_MX&query_string=${mc}`;
             const response = await fetch(snapshotUrl);
             
             if (!response.ok) {
                 attempt++;
-                if (statusBox) {
-                    statusBox.innerHTML = `<strong>Safer Server Issue (Attempt ${attempt}/${maxRetries}). Retrying...</strong>`;
-                }
                 await new Promise(r => setTimeout(r, 2000 * attempt));
                 continue;
             }
 
             const htmlText = await response.text();
-
             if (htmlText.includes("Record not found") || htmlText.includes("No records found") || !htmlText.includes("USDOT Number:")) {
                 return { status: "not_found" };
             }
@@ -2228,92 +1581,9 @@ async function processSingleMCWithDetailedError(mc, statusBox) {
                 return { status: "filtered_out" }; 
             }
 
-            let tables = el.querySelectorAll('table');
-            let allDetails = [];
-            tables.forEach(table => {
-                let rows = table.querySelectorAll('tr');
-                rows.forEach(row => {
-                    let rCells = row.querySelectorAll('td');
-                    rCells.forEach((cell, idx) => {
-                        let cVal = cell.textContent.trim();
-                        if (cVal === 'X' || cVal.toLowerCase() === 'x') {
-                            let labelCell = rCells[idx + 1] || rCells[idx - 1];
-                            if (labelCell) {
-                                let cleanVal = labelCell.textContent.trim().replace(/\s+/g, ' ');
-                                if (cleanVal && cleanVal !== 'X' && !allDetails.includes(cleanVal)) {
-                                    allDetails.push(cleanVal);
-                                    availableCategories.add(cleanVal);
-                                }
-                            }
-                        }
-                    });
-                });
-            });
-            if (allDetails.length > 0) { record.carrierDetails = allDetails.join(', '); }
-
-            if (record.usdot !== 'N/A') {
-                try {
-                    const smsUrl = `https://ai.fmcsa.dot.gov/SMS/Carrier/${record.usdot}/CarrierRegistration.aspx`;
-                    const smsResponse = await fetch(smsUrl);
-                    if (smsResponse.ok) {
-                        const smsHtml = await smsResponse.text();
-                        let smsEl = document.createElement('html');
-                        smsEl.innerHTML = smsHtml;
-
-                        let vehicleMapList = [];
-                        let smsTables = smsEl.querySelectorAll('table');
-                        smsTables.forEach(tbl => {
-                            let rows = tbl.querySelectorAll('tr');
-                            rows.forEach(row => {
-                                let cols = row.querySelectorAll('td, th');
-                                if (cols.length >= 4) {
-                                    let vType = cols[0].textContent.trim().replace(/\*$/, "").trim();
-                                    let owned = parseInt(cols[1].textContent.trim()) || 0;
-                                    let termLeased = parseInt(cols[2].textContent.trim()) || 0;
-                                    let tripLeased = parseInt(cols[3].textContent.trim()) || 0;
-                                    let totalCount = owned + termLeased + tripLeased;
-
-                                    if (totalCount > 0 && ["Straight Trucks", "Truck Tractors", "Trailers"].includes(vType)) {
-                                        vehicleMapList.push(`${vType} ${totalCount}`);
-                                    }
-                                }
-                            });
-                        });
-
-                        if (vehicleMapList.length > 0) {
-                            record.vehicleType = vehicleMapList.join(" | ");
-                        }
-
-                        let smsCells = smsEl.querySelectorAll('td, th, span, label, a');
-                        for (let j = 0; j < smsCells.length; j++) {
-                            let smsText = smsCells[j].textContent.trim();
-                            if (smsText.toLowerCase().includes("email") || smsText.includes("@")) {
-                                let emailMatch = smsText.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
-                                if (emailMatch && !emailMatch[0].includes("fmcsa") && !emailMatch[0].includes("dot.gov")) { 
-                                    record.email = emailMatch[0]; 
-                                    break; 
-                                }
-                            }
-                        }
-                        if (record.email === 'N/A') {
-                            let fullPageEmailMatch = smsHtml.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g);
-                            if (fullPageEmailMatch) {
-                                let validEmail = fullPageEmailMatch.find(e => !e.toLowerCase().includes("fmcsa") && !e.toLowerCase().includes("dot.gov"));
-                                if (validEmail) record.email = validEmail;
-                            }
-                        }
-                    }
-                } catch (smsErr) { 
-                    console.warn(`SMS Portal warning for USDOT ${record.usdot}:`, smsErr.message); 
-                }
-            }
             return { status: "success", data: record };
-
         } catch (err) {
             attempt++;
-            if (statusBox) {
-                statusBox.innerHTML = `<strong>Safer Server Issue on MC ${mc}. Retrying (${attempt}/${maxRetries})...</strong>`;
-            }
             await new Promise(r => setTimeout(r, 3000 * attempt));
         }
     }
@@ -2324,203 +1594,72 @@ window.startScraping = async function(overrideStart = null, overrideEnd = null) 
     const start = overrideStart !== null ? overrideStart : parseInt(document.getElementById('startMc').value);
     const end = overrideEnd !== null ? overrideEnd : parseInt(document.getElementById('endMc').value);
 
-   // SAFE STATUS INITIALIZER
-    try {
-        let statusBox = document.getElementById('status');
-        if (statusBox) {
-            statusBox.style.display = "block";
-            statusBox.innerHTML = "<strong>Initializing scan and connecting to Safer Web...</strong>";
-        }
-    } catch (err) {
-        console.error("Status update error:", err);
+    let statusBox = document.getElementById('status');
+    if (statusBox) {
+        statusBox.style.display = "block";
+        statusBox.innerHTML = "<strong>Initializing scan and connecting to Safer Web...</strong>";
     }
 
     if (isNaN(start) || isNaN(end) || start > end) {
-        let stBox = document.getElementById('status');
-        if (stBox) stBox.innerText = "Please enter a valid MC range.";
+        if (statusBox) statusBox.innerText = "Please enter a valid MC range.";
         return;
-    }
-
-    let currentRangeStr = `${start} - ${end}`;
-    if (!currentHistoryId || window.activeScrapeRange !== currentRangeStr) {
-        if (overrideStart === null) {
-            currentHistoryId = null;
-            scrapedData = [];
-            availableCategories.clear();
-        }
-        window.activeScrapeRange = currentRangeStr;
-        if (overrideStart === null) {
-            const tableBody = document.getElementById('resultsTable');
-            if (tableBody) tableBody.innerHTML = '';
-        }
     }
 
     scraping = true; 
     document.getElementById('startBtn').style.display = 'none';
-    if(document.getElementById('openHistoryBtn')) document.getElementById('openHistoryBtn').style.display = 'none';
-    if(document.getElementById('openFollowUpDrawerBtn')) document.getElementById('openFollowUpDrawerBtn').style.display = 'none';
     document.getElementById('stopBtn').style.display = 'inline-block';
     document.getElementById('downloadBtn').style.display = 'none';
 
     let totalToScan = end - start + 1;
     let totalProcessed = 0;
-    let errorDetailsList = [];
-    let startTime = Date.now();
 
-    let statusBox = document.getElementById('status');
-    if (statusBox) {
-        statusBox.style.display = "flex";
-        statusBox.style.flexDirection = "row";
-        statusBox.style.alignItems = "center";
-        statusBox.style.justifyContent = "space-between";
-        statusBox.style.padding = "10px 15px";
-        statusBox.style.background = "#f8f9fa";
-        statusBox.style.color = "#333";
-        statusBox.style.border = "1px solid #e9ecef";
-        statusBox.style.borderLeft = "5px solid #002d62";
-        statusBox.style.borderRadius = "4px";
-    }
-
-    if (!currentHistoryId && db) {
-        const now = new Date();
-        const formattedDate = now.toLocaleString('en-US', { hour12: true });
-
-        const initialHistoryItem = {
-            id: Date.now(),
-            date: formattedDate,
-            range: currentRangeStr,
-            totalRecords: scrapedData.length,
-            status: "Interrupted (Auto-Saved)",
-            records: scrapedData
-        };
-
-        currentHistoryId = initialHistoryItem.id;
-        const tx = db.transaction("history", "readwrite");
-        const store = tx.objectStore("history");
-        store.add(initialHistoryItem);
-    }
-
-    let effectiveStart = start;
-    if (scrapedData.length > 0) {
-        let maxScannedMc = Math.max(...scrapedData.map(r => parseInt(r.mc)));
-        if (!isNaN(maxScannedMc) && maxScannedMc >= start && maxScannedMc < end) {
-            effectiveStart = maxScannedMc + 1;
-        }
-    }
-
-    for (let mc = effectiveStart; mc <= end; mc++) {
+    for (let mc = start; mc <= end; mc++) {
         if (!scraping) break;
-
         let result = await processSingleMCWithDetailedError(mc, statusBox);
-        
-        if (result.status === "limit_exceeded") {
-            stopScraping();
-            showLimitExceededModal(`Your global license limit for "${currentClient}" has been reached. Max allowed active tabs/devices is <b>${userLimit}</b>. Scraping has been paused safely.`);
-            break;
-        }
-
         totalProcessed++;
 
-        if (result.status === "error") {
-            errorDetailsList.push(result.message);
-        } else {
-            errorDetailsList = []; 
-            if (result.status === "success" && result.data) {
-                let record = result.data;
-                
-                let isAlreadyExists = scrapedData.some(existing => String(existing.mc) === String(record.mc));
-                
-                if (!isAlreadyExists) {
-                    scrapedData.push(record);
-                    let recordIndex = scrapedData.length - 1;
-                    updateRealTimeHistory(scrapedData, false);
-                    updateCategoryCheckboxes();
+        if (result.status === "success" && result.data) {
+            let record = result.data;
+            scrapedData.push(record);
 
-                    let emailCellMarkup = buildEmailCellMarkup(record.email, record.name);
-                    let phoneCellMarkup = buildPhoneCellMarkup(record.phone);
-                    let activeRemarksValue = record.remarks || "";
+            const tableBody = document.getElementById('resultsTable');
+            if(totalProcessed === 1 && tableBody.innerHTML.includes('No data loaded')) tableBody.innerHTML = '';
 
-                    const tableBody = document.getElementById('resultsTable');
-                    let newRow = document.createElement('tr');
-                    newRow.innerHTML = `
-                        <td><b>${record.mc}</b></td>
-                        <td>${record.usdot}</td>
-                        <td>${record.name}</td>
-                        <td>${record.entityType}</td>
-                        <td><span class="badge badge-active">${record.status}</span></td>
-                        ${phoneCellMarkup}
-                        <td>${record.address}</td>
-                        ${emailCellMarkup}
-                        <td>${record.powerUnits}</td>
-                        <td style="white-space: nowrap !important;"><b>${record.vehicleType || 'N/A'}</b></td>
-                        <td class="remarks-cell-container">
-                            <textarea class="remarks-input-field" placeholder="Click to add remarks..." onfocus="remarksFocus(${recordIndex}, this)" onblur="remarksBlur(${recordIndex}, this)" oninput="syncRemarksData(${recordIndex}, this)">${activeRemarksValue}</textarea>
-                        </td>
-                        <td><button onclick="addLeadToFollowUpList(${recordIndex}, this)" class="premium-followup-btn">Follow</button></td>
-                    `;
-                    tableBody.appendChild(newRow);
-                }
-            }
-        }
-
-        let percentage = Math.floor((totalProcessed / totalToScan) * 100);
-        let elapsedSeconds = (Date.now() - startTime) / 1000;
-        let avgTimePerMC = elapsedSeconds / (totalProcessed || 1);
-        let remainingMCs = totalToScan - totalProcessed;
-        let estimatedRemainingSeconds = remainingMCs * avgTimePerMC;
-
-        let mins = Math.floor(estimatedRemainingSeconds / 60);
-        let secs = Math.floor(estimatedRemainingSeconds % 60);
-        let timeString = totalProcessed < 3 ? "Calculating ETA..." : `ETA: ${mins}m ${secs}s`;
-        let degrees = percentage * 3.6;
-
-        let latestErrorText = errorDetailsList.length > 0 ? `<span style="color:#d9534f; font-size:11px;" title="${errorDetailsList[errorDetailsList.length - 1]}">Retrying/Err</span>` : `<span style="color:#28a745; font-size:11px; font-weight:bold;">Status: Stable</span>`;
-
-        if (statusBox && scraping) {
-            statusBox.innerHTML = `
-                <div style="font-family: sans-serif; display: flex; flex-direction: column; gap: 2px; text-align: left;">
-                    <div style="font-size: 13px; font-weight: bold; color: #333;">Scanning MC ${mc} (${totalProcessed}/${totalToScan})</div>
-                    <div style="display: flex; gap: 10px; align-items: center;">
-                        <span style="font-size: 11px; color: #6c757d; font-weight: bold;">${timeString}</span>
-                        ${latestErrorText}
-                    </div>
-                </div>
-                <div style="position: relative; width: 40px; height: 40px; border-radius: 50%; background: conic-gradient(#002d62 ${degrees}deg, #ddd ${degrees}deg); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                    <div style="position: absolute; width: 30px; height: 30px; background: #f8f9fa; border-radius: 50%;"></div>
-                    <span style="position: relative; font-family: sans-serif; font-size: 11px; font-weight: bold; color: #002d62;">${percentage}%</span>
-                </div>
+            let newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td><b>${record.mc}</b></td>
+                <td>${record.usdot}</td>
+                <td>${record.name}</td>
+                <td>${record.entityType}</td>
+                <td><span class="badge badge-active">${record.status}</span></td>
+                ${buildPhoneCellMarkup(record.phone)}
+                <td>${record.address}</td>
+                ${buildEmailCellMarkup(record.email, record.name)}
+                <td>${record.powerUnits}</td>
             `;
+            tableBody.appendChild(newRow);
         }
-        populateStateDropdown();
-        populateVehicleTypeCheckboxes();
-        applyAdvancedFilters();
-
-        await new Promise(r => setTimeout(r, 350));
+        await new Promise(r => setTimeout(r, 200));
     }
 
     scraping = false;
     document.getElementById('startBtn').style.display = 'inline-block';
-    if(document.getElementById('openHistoryBtn')) document.getElementById('openHistoryBtn').style.display = 'inline-block';
-    if(document.getElementById('openFollowUpDrawerBtn')) document.getElementById('openFollowUpDrawerBtn').style.display = 'inline-block';
     document.getElementById('stopBtn').style.display = 'none';
-
-    if (statusBox) {
-        statusBox.style.padding = "15px";
-        statusBox.style.display = "flex";
-        statusBox.style.borderLeft = "5px solid #28a745";
-        statusBox.innerHTML = `<strong style="size: 15px; color: #28a745; font-family: sans-serif;">Completed! Found ${scrapedData.length} valid records.</strong>`;
-    }
-
-    if(scrapedData.length > 0) {
-        document.getElementById('downloadBtn').style.display = 'inline-block';
-        updateRealTimeHistory(scrapedData, true);
-    }
-}
+    if(scrapedData.length > 0) document.getElementById('downloadBtn').style.display = 'inline-block';
+};
 
 window.downloadCSV = function() {
     if(scrapedData.length > 0) {
         const start = document.getElementById('startMc').value;
         const end = document.getElementById('endMc').value;
-        triggerCSVDownload(scrapedData, `DispatchLink_Data_${start}_to_${end}.csv`);
+        let csv = "MC Number,USDOT,Company Name,Entity Type,Operating Status,Phone,Address,Email,Power Units\n";
+        scrapedData.forEach(r => {
+            csv += `${r.mc},${r.usdot},"${r.name}","${r.entityType}","${r.status}","${r.phone}","${r.address}","${r.email}","${r.powerUnits}"\n`;
+        });
+        let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        let link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `DispatchLink_Data_${start}_to_${end}.csv`;
+        link.click();
     }
 }
